@@ -1,0 +1,94 @@
+% TÍTULO — documento de lectura (skill /dossier). Para quién y qué responde.
+% Regenerar:  python3 graficos.py && latexmk -lualatex doc.tex
+% Todo el contenido de abajo es de ejemplo: se reemplaza entero.
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{dossier}
+\documento{Proyecto · Título corto}{Título completo del documento}{Autor o equipo}
+
+% Identidad del proyecto (opcional): redefinir la paleta con sus tokens, por ejemplo
+% \definecolor{acento}{HTML}{22456F}
+
+\begin{document}
+
+% ============================ PÁGINA 1: todo el documento en una página ============================
+\portada{Materia o proyecto · equipo · contexto}
+  {Título que dice de qué trata}
+  {Subtítulo: la pregunta que el documento responde, en una línea}
+  {Para quién es y fecha. Cada cifra lleva en gris su fuente.}
+
+\hitos[0.46]{0/Inicio/02-03/hecho, 0.25/Hito 1/06-04/hecho, 0.5/Hito 2/18-05/pendiente, 0.75/Hito 3/15-06/pendiente, 1/Cierre/13-07/pendiente}
+
+\begin{cifras}[4]
+  \cifra{Fuentes revisadas}{9}{5 controles cada una}
+  \cifra{Decisiones}{12}{9 cerradas · 3 abiertas}
+  \cifra{Fuera de plazo}{28,1\,\%}{de 3.265 tickets \fuente{R14}}
+  \cifra{Filas del registro}{21.748}{31 columnas \fuente{R02}}
+\end{cifras}
+
+\resumen
+\textbf{Qué pasó.} La respuesta primero, en dos o tres oraciones con sujeto y verbo. Una cifra
+solo si cambia lo que el lector entiende, con su fuente \fuente{R14}.
+
+\textbf{Qué cambió.} Lo que el lector sabía antes y ya no vale, y por qué.
+
+\textbf{Qué sigue.} La próxima decisión o entrega, con fecha. El detalle está en
+\ver{sec:uno}.
+
+\ojo[Antes del 18/05]{Lo único que el lector no puede pasar por alto. Como mucho un aviso así por página.}
+
+\indice
+
+% Si el resumen no llena la portada, una pieza de ancho completo la cierra.
+\begin{bloque}[Azul oscuro: hecho. Celeste: en curso. Gris: lo que falta.]
+\proceso[2]{Relevamiento/A1/hecho, Datos y calidad/A2/hecho, Modelo/A3/actual, Plan y piloto/A4/futuro}
+\end{bloque}
+
+% ============================ PÁGINA 2: una página, un mensaje ============================
+\newpage
+\section{Título que dice el mensaje de la página}\label{sec:uno}
+
+Un párrafo que pone en contexto lo que muestra la figura. Tres a cinco oraciones; lo que se
+puede ver en el gráfico no se repite en el texto.
+
+\figura{fig/f1_ejemplo.pdf}{El pie dice qué se ve y cómo leerlo: quitar duplicados mueve poco
+la cifra; el mes de medición la mueve mucho \fuente{R14 · R01}.}
+
+\begin{itemize}
+\item \textbf{Una idea por punto.} Una oración que la explica.
+\item \textbf{Otra idea.} Lo que es propuesta se rotula como tal \chip{propuesta}.
+\end{itemize}
+
+\nota[Cómo se midió]{Contexto que ayuda a leer la página pero no urge.}
+
+\subsection{Un gráfico chico junto a su explicación}
+% columna: las dos se alinean por arriba; el texto va en bandera y separa los párrafos.
+\noindent\begin{columna}{0.5\linewidth}
+\figura{fig/f2_categorias.pdf}{2025 quedó 40 clientes por debajo de 2024 \fuente{R03}.}
+\end{columna}\hfill
+\begin{columna}{0.46\linewidth}
+Dos columnas sirven cuando el gráfico es chico y el texto lo explica. El texto dice qué
+significa la figura; los valores ya están escritos sobre las barras.
+
+Un segundo párrafo, si hace falta, queda separado como en el resto del documento.
+\end{columna}
+
+\begin{tabularx}{\linewidth}{@{}P{3.2cm}LP{2cm}@{}}
+\toprule
+\enc{Qué} & \enc{Detalle} & \enc{Fuente} \\
+\midrule
+\textbf{Primero} & una fila por decisión o dato, en pocas palabras & \fuente{R05} \\
+\textbf{Segundo} & la tabla ordena lo que la prosa no puede comparar & \fuente{R09} \\
+\bottomrule
+\end{tabularx}
+\medskip
+
+Más información en \enlace{https://ctan.org/pkg/tcolorbox}{la documentación de tcolorbox}.
+
+\anexo{Glosario}
+\begin{glosario}
+\termino{Fuera de plazo}{Definición copiada de la fuente del proyecto, no escrita de memoria.}
+\termino{Ticket duplicado}{Dos registros del mismo pedido y el mismo motivo, abiertos el mismo día.}
+\end{glosario}
+
+\end{document}

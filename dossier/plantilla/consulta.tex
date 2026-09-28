@@ -1,0 +1,106 @@
+% TÍTULO — hoja de consulta (skill /dossier): formulario, chuleta o tabla para un examen.
+% Regenerar:  python3 graficos.py && latexmk -lualatex doc.tex
+% Todo el contenido de abajo es de ejemplo: se reemplaza entero. Todo entra en una página.
+% Sin \resumen ni \proceso: una fila de la tabla por ítem, un aviso con las convenciones,
+% una pieza que relaciona los ítems y cifras solo si son valores que se consultan.
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{dossier}
+\documento{Proyecto · Título corto}{Título completo del documento}{Autor o equipo}
+
+% Identidad del proyecto (opcional): redefinir la paleta con sus tokens, por ejemplo
+% \definecolor{acento}{HTML}{22456F}
+
+% Fila de grupo dentro de la tabla: \grupofila{Discretas}{nota}. El 6 es el número de columnas.
+\newcommand{\grupofila}[2]{\multicolumn{6}{@{}l@{}}{\rule{0pt}{11pt}{\scriptsize\ttfamily\bfseries
+  \color{acento}\MakeUppercase{#1}}\enspace{\scriptsize\color{apagado}#2}}\\}
+
+\begin{document}
+
+\portada*{Materia o proyecto · para qué instancia}
+  {Título que dice qué se consulta}
+  {Qué trae cada fila}
+
+% El aviso lleva lo que cambia las fórmulas y el lector tiene que saber antes de usarlas.
+\ojo[Convenciones]{La geométrica cuenta \textbf{fracasos} (soporte $\mathbb{N}_0$); la normal
+va con el \textbf{desvío}, $N(\mu, \sigma)$; la exponencial, con la \textbf{tasa} $\lambda$.}
+
+% Una fila por ítem. \dfrac en las celdas; \addlinespace después de una fila con fórmulas
+% altas (\\[2pt] no suma espacio si la fila tiene celdas de varias líneas). Coma decimal
+% sin espacio ($0,95$); entre dos términos, coma y espacio ($(n, p)$).
+{\footnotesize\setlength{\tabcolsep}{3.5pt}\renewcommand{\arraystretch}{1.35}%
+\begin{tabularx}{\linewidth}{@{}P{2.4cm}P{2.45cm}P{2.6cm}P{1.8cm}P{2.1cm}L@{}}
+\toprule
+\enc{Distribución} & \enc{Soporte} & \enc{Masa o densidad} & \enc{Esperanza} & \enc{Varianza} & \enc{Cuándo se usa} \\
+\midrule
+\grupofila{Discretas}{$q=1-p$}
+\textbf{Bernoulli}\newline{\color{rotulo}$(p)$} & $\{0, 1\}$ & $p_X(1)=p$,\newline $p_X(0)=q$ & $p$ & $pq$ &
+  Un ensayo: éxito o fracaso. \\ \addlinespace[2.5pt]
+\textbf{Binomial}\newline{\color{rotulo}$(n, p)$} & $\{0, \dots, n\}$ & $\dbinom{n}{k}p^k q^{\,n-k}$ & $np$ & $npq$ &
+  Éxitos en $n$ ensayos independientes con igual $p$. \\
+\textbf{Geométrica}\newline{\color{rotulo}$(p)$} & $\mathbb{N}_0$ & $q^{\,k}\,p$ & $\dfrac{q}{p}$ & $\dfrac{q}{p^2}$ &
+  Fracasos antes del primer éxito. Única discreta sin memoria. \\
+\textbf{Binomial negativa}\newline{\color{rotulo}$(r, p)$} & $\mathbb{N}_0$ & $\dbinom{k+r-1}{k}q^{\,k}p^{\,r}$ & $\dfrac{rq}{p}$ & $\dfrac{rq}{p^2}$ &
+  Fracasos antes del $r$-ésimo éxito. \\
+\textbf{Hipergeométrica}\newline{\color{rotulo}$(N, M, n)$} & \mbox{$\max\{0, n-(N-M)\}$,}\newline $\dots,\ \min\{n, M\}$ &
+  $\dfrac{\binom{M}{k}\binom{N-M}{n-k}}{\binom{N}{n}}$ & $n\dfrac{M}{N}$ & $npq\,\dfrac{N-n}{N-1}$ &
+  Muestra sin reposición de una población finita de dos clases. \\
+\textbf{Poisson}\newline{\color{rotulo}$(\lambda)$} & $\mathbb{N}_0$ & $\dfrac{\lambda^{k}}{k!}\,e^{-\lambda}$ & $\lambda$ & $\lambda$ &
+  Eventos raros por intervalo, con tasa $\lambda$. \\
+\grupofila{Continuas}{fuera del soporte, $f_X=0$}
+\textbf{Uniforme}\newline{\color{rotulo}$(a, b)$} & $(a, b)$ & $\dfrac{1}{b-a}$ & $\dfrac{a+b}{2}$ & $\dfrac{(b-a)^2}{12}$ &
+  Un valor al azar en un intervalo. \\
+\textbf{Exponencial}\newline{\color{rotulo}$(\lambda)$} & $x>0$ & $\lambda e^{-\lambda x}$ & $\dfrac{1}{\lambda}$ & $\dfrac{1}{\lambda^2}$ &
+  Tiempo hasta una falla o entre llegadas. Sin memoria. \\
+\textbf{Gamma}\newline{\color{rotulo}$(\alpha, \lambda)$} & $x>0$ & $\dfrac{\lambda^{\alpha}x^{\alpha-1}e^{-\lambda x}}{\Gamma(\alpha)}$ & $\dfrac{\alpha}{\lambda}$ & $\dfrac{\alpha}{\lambda^2}$ &
+  Suma de $\alpha$ exponenciales independientes. \\
+\textbf{Weibull}\newline{\color{rotulo}$(\lambda, b)$} & $x>0$ & $\lambda b(\lambda x)^{b-1}e^{-(\lambda x)^b}$ & $\dfrac{1}{\lambda}\Gamma\!\left(1+\tfrac1b\right)$ &
+  $\dfrac{1}{\lambda^2}\Big[\Gamma\!\left(1+\tfrac2b\right)$ $-\,\Gamma\!\left(1+\tfrac1b\right)^2\Big]$ &
+  Tasa de fallas variable: $b>1$ desgaste, $b<1$ mortalidad infantil. \\
+\textbf{Normal}\newline{\color{rotulo}$N(\mu, \sigma)$} & $\mathbb{R}$ & $\dfrac{1}{\sqrt{2\pi}\,\sigma}\,e^{-\frac{(x-\mu)^2}{2\sigma^2}}$ & $\mu$ & $\sigma^2$ &
+  Estandarizar $Z=\frac{X-\mu}{\sigma}$ y leer $\Phi$. \\
+\bottomrule
+\end{tabularx}}
+
+{\footnotesize\color{apagado}$\Gamma(n)=(n-1)!$, \enspace $\Gamma(\tfrac12)=\sqrt{\pi}$; \enspace
+$\Phi(-z)=1-\Phi(z)$. \enspace \fuente{formulario de la materia}\par}
+
+% La pieza que relaciona los ítems: de dónde sale cada uno. Nodos de una o dos palabras.
+\begin{bloque}[Las discretas salen de ensayos de Bernoulli; las continuas (con fondo), de los
+tiempos de un proceso de Poisson. Flecha llena: se obtiene; punteada: aproxima.]
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \tikzset{d/.style={concepto,una linea,font=\scriptsize,minimum width=2cm},
+           c/.style={d,fill=fondo},
+           aprox/.style={rel,dashed},
+           verbo/.style={relacion,align=center}}
+  \node[d] (ber) at (1.0,0)   {Bernoulli};
+  \node[d] (bin) at (4.85,0)  {Binomial};
+  \node[d] (poi) at (8.7,0)   {Poisson};
+  \node[c] (exp) at (12.55,0) {Exponencial};
+  \node[c] (gam) at (16.3,0)  {Gamma};
+  \node[d] (hip) at (4.85,1.3)  {Hipergeométrica};
+  \node[d] (geo) at (4.85,-1.3) {Geométrica};
+  \node[d] (bn)  at (8.7,-1.3)  {Binomial negativa};
+  \node[c] (wei) at (12.55,1.3) {Weibull};
+  \node[c] (nor) at (16.3,-1.3) {Normal};
+  \draw[rel]   (ber) -- node[verbo,above=1pt] {suma de $n$} (bin);
+  \draw[aprox] (bin) -- node[verbo,above=1pt] {$n$ grande,\\$p$ chico} (poi);
+  \draw[rel]   (poi) -- node[verbo,above=1pt] {tiempo entre\\eventos} (exp);
+  \draw[rel]   (exp) -- node[verbo,above=1pt] {suma de $k$} (gam);
+  \draw[aprox] (hip) -- node[verbo,right] {$N\gg n$} (bin);
+  \draw[rel]   (ber.south) |- node[verbo,pos=0.72,above=1pt] {hasta el 1.\textsuperscript{er} éxito} (geo.west);
+  \draw[rel]   (geo) -- node[verbo,above=1pt] {suma de $r$} (bn);
+  \draw[rel]   (wei) -- node[verbo,right] {$b=1$} (exp);
+  \draw[aprox] (gam) -- node[verbo,left=2pt] {$k$ grande} (nor);
+\end{tikzpicture}
+\end{bloque}
+
+% Solo si son valores que se consultan (fractiles, constantes, plazos); si no, se quita.
+\begin{cifras}[4]
+  \cifra{Fractil $z_{0,95}$}{1,6449}{$\Phi(z)=0,95$ \fuente{tabla normal}}
+  \cifra{Fractil $z_{0,975}$}{1,9600}{$\Phi(z)=0,975$ \fuente{tabla normal}}
+  \cifra{Fractil $z_{0,99}$}{2,3263}{$\Phi(z)=0,99$ \fuente{tabla normal}}
+  \cifra{Fractil $z_{0,995}$}{2,5758}{$\Phi(z)=0,995$ \fuente{tabla normal}}
+\end{cifras}
+
+\end{document}

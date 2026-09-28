@@ -1,0 +1,341 @@
+% Cómo guarda Git la historia por dentro — informe técnico de ejemplo (skill /dossier): objetos, referencias y merge, con comandos y su salida.
+% Perfil: breve — texto normal — imágenes normal — lector entrega — formato impresión — temas=4
+% Pedido: «/dossier breve lector=entrega impresion» — Un informe técnico para entregar: cómo guarda Git la historia por dentro (objetos blob, tree y commit, referencias y ramas, qué hace un merge), con fragmentos de comandos y su salida.
+% Medir:  python3 ~/.claude/skills/dossier/scripts/medir.py breve-git-por-dentro.tex --paginas 5 --paginas-min 2 --paginas-texto 2.0 --parte-texto 0.4 --densa 550 --visuales-min 4 --lector entrega
+% Regenerar:  sh demo.sh (salidas de los comandos) · python3 graficos.py && latexmk -lualatex breve-git-por-dentro.tex
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[impresion]{dossier}
+\documento{Git por dentro}{Cómo guarda Git la historia por dentro}{Ejemplo de /dossier}
+
+% Sesiones de terminal: sin números de línea; cada línea que empieza con $ es un comando.
+\lstdefinestyle{terminal}{numbers=none,xleftmargin=6pt,framexleftmargin=6pt,
+  moredelim=[l][\color{acento}\bfseries]{\$}}
+
+\begin{document}
+
+% ============================ PÁGINA 1 ============================
+\portada{Informe técnico · control de versiones}
+  {Cómo guarda Git la historia por dentro}
+  {Objetos blob, tree y commit, referencias y ramas, y qué escribe un merge}
+  {Informe técnico. Las siglas en gris remiten a las referencias del final; las salidas de comandos son de un repositorio de prueba armado para este informe.}
+\datosentrega{Herramientas de desarrollo de software}{}{}{Septiembre de 2026}
+
+\begin{cifras}[4]
+  \cifra{Nombre de un objeto}{40}{caracteres: el SHA-1 del contenido \fuente{PG §10.2}}
+  \cifra{Una rama en disco}{41 bytes}{40 caracteres y un salto de línea \fuente{PG §3.1}}
+  \cifra{Padres de un merge}{2}{las dos puntas que se combinan \fuente{GM}}
+  \cifra{Blobs nuevos del merge}{0}{escribió 2 trees y el commit \fuente{R}}
+\end{cifras}
+
+\resumen[Resumen ejecutivo]
+\textbf{Qué guarda.} Por dentro, Git es un almacén de clave y valor: cada objeto se
+guarda en \cod{.git/objects} bajo el hash SHA-1 de su contenido \fuente{PG §10.2}. Tres
+tipos arman la historia: el blob guarda el contenido de un archivo, el tree guarda un
+directorio (nombres, modos y hashes) y el commit guarda un tree raíz, sus padres, el
+autor y el mensaje.
+
+\textbf{Cómo se encadena.} Cada commit es una foto completa del proyecto que nombra a su
+padre por el hash \fuente{PG §3.1}. Lo que no cambió no se copia: el tree nuevo apunta al
+mismo objeto. En la prueba, el segundo commit escribió 4 objetos y reutilizó 1
+\fuente{R}.
+
+\textbf{Qué es una rama.} Un archivo con el hash de un commit. \cod{HEAD} normalmente no
+guarda un hash sino el nombre de la rama actual, y al hacer un commit la rama avanza sola
+\fuente{PG §10.3}.
+
+\textbf{Qué hace un merge.} Si la rama actual es ancestro de la otra, Git solo avanza el
+puntero. Si divergieron, combina las dos puntas contra su ancestro común y escribe un
+commit con dos padres \fuente{GM}.
+
+\ojo[Tesis]{Los objetos de Git no cambian nunca: un contenido distinto es otro objeto,
+con otro nombre. Lo único que se mueve son las referencias. Por eso una rama cuesta 41
+bytes, y en la prueba un merge sin conflictos escribió solo dos trees y un commit.}
+
+\indice
+
+\vfill
+\begin{bloque}[Qué hace \cod{git commit}: guarda los blobs de los archivos que cambiaron, escribe los trees y el commit, y mueve la rama actual al commit nuevo \fuente{PG §10.2 · §3.1}. El anexo lo repite con comandos de bajo nivel: {\ver[paso a paso]{sec:amano}}.]
+\proceso{Guardar los blobs/1/neutro, Escribir los trees/2/neutro, Escribir el commit/3/neutro, Mover la rama/4/neutro}
+\end{bloque}
+
+% ============================ OBJETOS ============================
+\newpage
+\section{Git guarda cada contenido bajo el hash de ese contenido}\label{sec:objetos}
+
+Git es un sistema de archivos direccionable por contenido. \cod{git hash-object -w}
+recibe un contenido, lo guarda en la base de objetos y devuelve su clave: un hash SHA-1
+de 40 caracteres. Los dos primeros nombran la subcarpeta y los 38 restantes, el archivo
+\fuente{PG §10.2}.
+
+\begin{bloque}[Un blob escrito a mano: la base de objetos empieza vacía y después tiene un archivo, en la subcarpeta de los dos primeros caracteres del hash \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ find .git/objects -type f
+$ echo 'harina, agua, sal' | git hash-object -w --stdin
+23e2177961ce1f6375565a8f8bc7edfe00900232
+$ find .git/objects -type f
+.git/objects/23/e2177961ce1f6375565a8f8bc7edfe00900232
+\end{codigo}
+\end{bloque}
+
+El hash no se calcula solo sobre el contenido. Git antepone un encabezado con el tipo, un
+espacio, el tamaño en bytes y un byte nulo; calcula el SHA-1 de todo eso y lo comprime
+con zlib antes de escribirlo \fuente{PG §10.2}. Ese objeto es un \textbf{blob}: guarda el
+contenido y nada más. El nombre del archivo no está en él.
+
+\begin{bloque}[De contenido a objeto. El hash sale del encabezado más el contenido, y ese hash, en azul, es a la vez el nombre del objeto y la ruta del archivo comprimido \fuente{PG §10.2 · R}.]
+\begin{tikzpicture}[node distance=6mm]
+  \path (0,0) (17.4,0);
+  \node[cajag,anchor=west] (a) at (0,0) {\arriba{1.05cm}{3.35cm}{\textbf{Contenido}\\{\ttfamily harina, agua, sal}\\18 bytes}};
+  \node[cajag,right=of a] (b) {\arriba{1.05cm}{3.35cm}{\textbf{Con encabezado}\\{\ttfamily blob 18\textbackslash 0} delante}};
+  \node[cajaa,inner sep=6pt,font=\footnotesize,right=of b] (c) {\arriba{1.05cm}{3.35cm}{\textbf{SHA-1}\\{\ttfamily 23e2177\ldots}\\40 caracteres}};
+  \node[cajag,right=of c] (d) {\arriba{1.05cm}{3.35cm}{\textbf{zlib, a disco}\\{\ttfamily objects/23/}\\{\ttfamily e2177\ldots}}};
+  \draw[flecha] (a) -- (b); \draw[flecha] (b) -- (c); \draw[flecha] (c) -- (d);
+\end{tikzpicture}
+\end{bloque}
+
+\begin{bloque}[\cod{cat-file -t} da el tipo y \cod{-s}, el tamaño en bytes \fuente{GC}; la última línea recalcula el hash sin Git, con el encabezado delante, y da el mismo valor \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ git cat-file -t 23e2177
+blob
+$ git cat-file -s 23e2177
+18
+$ printf 'blob 18\000harina, agua, sal\n' | shasum -a 1
+23e2177961ce1f6375565a8f8bc7edfe00900232  -
+\end{codigo}
+\end{bloque}
+
+La consecuencia es que el mismo contenido da siempre el mismo nombre. Dos archivos
+iguales, o el mismo archivo en dos commits, son un único objeto: en la prueba, el blob de
+\cod{README.md} es el mismo en los dos primeros commits \fuente{R}.
+
+% ============================ TREE Y COMMIT ============================
+\section{Un commit apunta a un tree raíz y al commit anterior}\label{sec:commits}
+
+El \textbf{tree} guarda lo que el blob no tiene. Cada entrada lleva un modo, un tipo, un
+hash y un nombre, y apunta a un blob o a otro tree, como un directorio de UNIX. Para
+archivos, los modos válidos son 100644 (normal), 100755 (ejecutable) y 120000 (enlace
+simbólico). El \textbf{commit} agrega el tree raíz, los padres, autor y committer con su
+marca de tiempo, una línea en blanco y el mensaje \fuente{PG §10.2}.
+
+\begin{bloque}[El primer commit de la prueba y sus dos trees; después, el comienzo del segundo commit, que ya nombra a su padre \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ git cat-file -p HEAD
+tree 89891a186edc343cc3c07c8f658664b8ca1b7c69
+author Ana Ejemplo <ana@example.com> 1772445600 +0000
+committer Ana Ejemplo <ana@example.com> 1772445600 +0000
+
+Primera receta
+$ git cat-file -p 'HEAD^{tree}'
+100644 blob ede572d7bcbab9932e7b7e8a6c03c72863e97892    README.md
+040000 tree ab94ce87fc1addce4753862b3eb9450927f52aab    recetas
+$ git cat-file -p 'HEAD^{tree}:recetas'
+100644 blob 23e2177961ce1f6375565a8f8bc7edfe00900232    pan.txt
+\end{codigo}
+\vspace{3pt}
+\begin{codigo}[style=terminal]
+$ git cat-file -p HEAD | head -3
+tree 44b097ba92a4fa7036d9f33354a5c389797e4341
+parent c32cb211a8a6e7b0aca88b2c192866aeb5edb84d
+author Ana Ejemplo <ana@example.com> 1772532000 +0000
+\end{codigo}
+\end{bloque}
+
+En el segundo commit solo cambió \cod{pan.txt}. Git escribió cuatro objetos (el blob
+nuevo, los dos trees que lo contienen y el commit) y reutilizó el blob de
+\cod{README.md} \fuente{R}. Así Git guarda fotos completas y no diferencias
+\fuente{PG §3.1} sin copiar el proyecto entero en cada commit.
+
+\begin{bloque}[Los dos primeros commits de la prueba. Los nombres de archivo van en las flechas porque los guarda el tree, no el blob. Con borde terracota, el blob de \cod{README.md}: no cambió, y los dos trees raíz apuntan al mismo objeto \fuente{R}.]
+\begin{tikzpicture}
+  \path (0,0) (17.4,0);
+  \node[cajag,text width=2.6cm] (c1) at (3.6,0) {\textbf{commit c32cb21}\\Primera receta};
+  \node[cajag,text width=2.6cm] (c2) at (13.8,0) {\textbf{commit e5086a9}\\Pan con levadura};
+  \node[cajag,text width=2.6cm] (t1) at (3.6,-1.3) {\textbf{tree 89891a1}};
+  \node[cajag,text width=2.6cm] (t2) at (13.8,-1.3) {\textbf{tree 44b097b}};
+  \node[cajag,text width=2.6cm] (r1) at (1.6,-2.6) {\textbf{tree ab94ce8}};
+  \node[cajag,text width=2.6cm] (r2) at (15.8,-2.6) {\textbf{tree 3001611}};
+  \node[cajag,text width=2.6cm] (p1) at (1.6,-3.9) {\textbf{blob 23e2177}\\harina, agua, sal};
+  \node[cajag,text width=2.6cm] (p2) at (15.8,-3.9) {\textbf{blob c8f8081}\\\ldots, levadura};
+  \node[cajag,draw=acento2,line width=0.8pt,text width=2.6cm] (rd) at (8.7,-3.9) {\textbf{blob ede572d}\\Recetario de ejemplo};
+  \draw[rel] (c2) -- node[relacion,above] {padre} (c1);
+  \draw[rel] (c1) -- (t1); \draw[rel] (c2) -- (t2);
+  \draw[rel] (t1) -- node[relacion] {recetas} (r1);
+  \draw[rel] (t2) -- node[relacion] {recetas} (r2);
+  \draw[rel] (r1) -- node[relacion,right] {pan.txt} (p1);
+  \draw[rel] (r2) -- node[relacion,left] {pan.txt} (p2);
+  \draw[rel] (t1) -- node[relacion] {README.md} (rd);
+  \draw[rel] (t2) -- node[relacion] {README.md} (rd);
+\end{tikzpicture}
+\end{bloque}
+
+\noindent\begin{columna}{0.56\linewidth}
+\figura{fig/f1_escritos_reutilizados.pdf}{Después del primero, ningún commit de la prueba copia el proyecto entero: cada uno escribe 3 o 4 objetos y reutiliza el resto. «Escritos» cuenta el propio commit \fuente{R}.}
+\end{columna}\hfill
+\begin{columna}{0.4\linewidth}
+En los seis commits de la prueba, lo reutilizado crece con el proyecto, y lo
+escrito se mantiene en 3 o 4 objetos después del primero. El merge, el último, no escribió ningún blob:
+todo su contenido ya existía \fuente{R}.
+
+Los objetos sueltos son la forma inicial. Cuando se acumulan, o con \cod{git gc}, Git
+los empaqueta en un packfile y guarda algunas versiones como diferencias contra otra
+\fuente{PG §10.4}.
+\end{columna}
+
+% ============================ REFERENCIAS Y RAMAS ============================
+\section{Una rama es un archivo de 41 bytes con el hash de un commit}\label{sec:ramas}
+
+Recordar hashes no es práctico, así que Git guarda nombres simples, las
+\textbf{referencias}, en \cod{.git/refs} \fuente{PG §10.3}. Una rama es una referencia
+en \cod{refs/heads}: un archivo con los 40 caracteres del hash de un commit y un salto de
+línea \fuente{PG §3.1}. Crear una rama es escribir ese archivo: \cod{git branch sopa}
+copió el hash al que apuntaba \cod{main} \fuente{R}.
+
+\begin{bloque}[Las referencias de la prueba después del segundo commit: \cod{HEAD} guarda un nombre; \cod{main} y la rama nueva, el mismo hash \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ cat .git/HEAD
+ref: refs/heads/main
+$ cat .git/refs/heads/main
+e5086a9f872b9f4e862a978f5a254cdc49af732c
+$ wc -c < .git/refs/heads/main
+      41
+$ git branch sopa
+$ cat .git/refs/heads/sopa
+e5086a9f872b9f4e862a978f5a254cdc49af732c
+\end{codigo}
+\end{bloque}
+
+\cod{HEAD} es una \textbf{referencia simbólica}: en lugar de un hash contiene
+\cod{ref: refs/heads/main}, la rama actual. Al hacer un commit, Git toma como padre el
+commit al que apunta \cod{HEAD} \fuente{PG §10.3}, y la rama avanza sola al commit nuevo
+\fuente{PG §3.1}. Si \cod{HEAD} guarda un hash en vez de un nombre, el repositorio queda
+en estado \emph{detached HEAD} \fuente{PG §10.3}.
+
+\begin{bloque}[Arriba, archivos que se reescriben con cada commit o rama nueva; abajo, objetos que no cambian. En azul, \cod{HEAD}, que nombra una rama \fuente{PG §10.3 · R}.]
+\begin{tikzpicture}
+  \carril{0}{1.3}{REFERENCIAS}
+  \carril{-1.6}{1.3}{OBJETOS}
+  \node[cajaa,inner sep=6pt,font=\footnotesize,text width=3.1cm] (h) at (2.6,0.65) {\textbf{HEAD}\\{\ttfamily ref: refs/heads/main}};
+  \node[cajag,fill=white,text width=2.9cm] (m) at (8.0,0.65) {\textbf{refs/heads/main}\\41 bytes};
+  \node[cajag,fill=white,text width=2.9cm] (s) at (14.6,0.65) {\textbf{refs/heads/sopa}\\41 bytes};
+  \node[cajag,fill=white,text width=2.6cm] (k1) at (4.6,-0.95) {\textbf{commit c32cb21}};
+  \node[cajag,fill=white,text width=2.6cm] (k2) at (11.3,-0.95) {\textbf{commit e5086a9}};
+  \draw[rel] (h) -- node[relacion,above] {nombre} (m);
+  \draw[rel] (m.south) -- node[relacion,pos=0.45] {hash} (k2.north west);
+  \draw[rel] (s.south) -- node[relacion,pos=0.45] {hash} (k2.north east);
+  \draw[rel] (k2) -- node[relacion,above] {padre} (k1);
+\end{tikzpicture}
+\end{bloque}
+
+Las etiquetas también son referencias. Una liviana es una referencia que no se mueve; una
+anotada apunta a un cuarto tipo de objeto, con quien la creó, la fecha, un mensaje y un puntero. Las
+referencias remotas, en \cod{refs/remotes}, son de solo lectura: guardan dónde estaba
+cada rama del servidor la última vez que hubo contacto \fuente{PG §10.3}.
+
+% ============================ MERGE ============================
+\section{Un merge mueve un puntero o escribe un commit con dos padres}\label{sec:merge}
+
+Si la rama actual es ancestro del commit que se integra, no hace falta un commit nuevo:
+Git mueve \cod{HEAD} y la rama a ese commit. Es el \textbf{avance rápido}
+(\emph{fast-forward}), y \cod{--no-ff} lo evita \fuente{GM}. En la prueba, \cod{postres}
+estaba un commit delante de \cod{main}, y el merge solo movió \cod{main}.
+
+Si las ramas divergieron, Git hace un \textbf{merge de tres vías} con las dos puntas y su
+mejor ancestro común, el que da \cod{git merge-base} \fuente{GB}. El resultado es un
+commit de merge con las dos puntas como padres; al integrar una sola rama, la estrategia
+por defecto es \emph{ort} \fuente{GM}.
+
+\begin{bloque}[Los dos casos en la prueba: el avance rápido no escribe ningún commit; el de tres vías parte del ancestro común y escribe uno con dos líneas \texttt{parent} \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ git merge postres
+Updating e5086a9..e32d0b4
+Fast-forward
+ recetas/flan.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 recetas/flan.txt
+\end{codigo}
+\vspace{3pt}
+\begin{codigo}[style=terminal]
+$ git merge-base main sopa
+e5086a9f872b9f4e862a978f5a254cdc49af732c
+$ git merge --no-edit sopa
+Merge made by the 'ort' strategy.
+ recetas/sopa.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 recetas/sopa.txt
+$ git cat-file -p HEAD
+tree e5fb560fb2e91ea96101922f271ed707eb450a1a
+parent 5cf9725703f75829e73fbd83b6c31b210f5a9cd0
+parent 741c235c93ffe14dc65837348fd10bd7cac47192
+author Ana Ejemplo <ana@example.com> 1772877600 +0000
+committer Ana Ejemplo <ana@example.com> 1772877600 +0000
+
+Merge branch 'sopa'
+\end{codigo}
+\end{bloque}
+
+\begin{bloque}[Arriba, \cod{main} salta de \cod{e5086a9} a \cod{e32d0b4} sin objetos nuevos. Abajo, el commit de merge, en azul, tiene dos padres, y el ancestro común es el mismo \cod{e5086a9}. Las flechas van de cada commit a su padre \fuente{R}.]
+\begin{tikzpicture}[k/.style={cajag,fill=white,una linea,font=\footnotesize\ttfamily}]
+  \carril{0}{1.5}{AVANCE RÁPIDO}
+  \carril{-3.3}{2.9}{TRES VÍAS}
+  % avance rápido
+  \node[k] (a1) at (2.6,0.55) {e5086a9};
+  \node[k] (a2) at (6.4,0.55) {e32d0b4};
+  \draw[rel] (a2) -- (a1);
+  \node[etiqueta,anchor=south] at (a1.north) {main antes};
+  \node[etiqueta,anchor=south] at (a2.north) {main después, postres};
+  \node[etiqueta,text width=6.6cm,align=left,anchor=west] at (9.6,0.75) {solo cambia el archivo de la rama: ningún commit nuevo};
+  % tres vías
+  \node[k] (b0) at (2.6,-1.9) {e5086a9};
+  \node[k] (b1) at (6.4,-1.3) {e32d0b4};
+  \node[k] (b2) at (10.0,-1.3) {5cf9725};
+  \node[k] (b3) at (8.2,-2.55) {741c235};
+  \node[cajaa,inner sep=6pt,una linea,font=\footnotesize\ttfamily] (bm) at (14.4,-1.9) {96dc8e2};
+  \draw[rel] (b1) -- (b0); \draw[rel] (b2) -- (b1); \draw[rel] (b3) -- (b0);
+  \draw[rel] (bm) -- node[relacion,above,pos=0.45] {padre 1} (b2);
+  \draw[rel] (bm) -- node[relacion,below,pos=0.45] {padre 2} (b3);
+  \node[etiqueta,anchor=north] at (b0.south) {ancestro común};
+  \node[etiqueta,anchor=south] at (b2.north) {main};
+  \node[etiqueta,anchor=north] at (b3.south) {sopa};
+  \node[etiqueta,anchor=north] at (bm.south) {merge};
+\end{tikzpicture}
+\end{bloque}
+
+Si un archivo no se puede combinar solo, \cod{HEAD} queda donde estaba, \cod{MERGE_HEAD}
+apunta a la otra punta y el índice guarda hasta tres versiones: la del ancestro, la de
+\cod{HEAD} y la de la otra rama. El archivo queda con marcadores de conflicto, y
+\cod{git merge --abort} vuelve al estado anterior \fuente{GM}.
+
+\anexo{Anexo: el segundo commit, paso a paso}\label{sec:amano}
+
+\cod{git commit} se puede reproducir con comandos de bajo nivel que hacen lo mismo:
+\cod{git update-index} pone el archivo en el índice, \cod{git write-tree} escribe el tree,
+\cod{git commit-tree} escribe el commit con su padre y \cod{git update-ref} mueve la rama
+\fuente{PG §10.2 · §10.3}. En una copia de la prueba, con el mismo autor, la misma fecha y
+el mismo mensaje, los cuatro pasos dan exactamente el tree \cod{44b097b} y el commit
+\cod{e5086a9} que había escrito \cod{git commit} \fuente{R}.
+
+\begin{bloque}[El segundo commit de la prueba, hecho a mano: los hashes coinciden con los del commit hecho con \cod{git commit}, porque el contenido de cada objeto es el mismo \fuente{R}.]
+\begin{codigo}[style=terminal]
+$ git update-index recetas/pan.txt
+$ git write-tree
+44b097ba92a4fa7036d9f33354a5c389797e4341
+$ echo 'Pan con levadura' | git commit-tree 44b097b -p HEAD
+e5086a9f872b9f4e862a978f5a254cdc49af732c
+$ git update-ref refs/heads/main e5086a9
+$ git log --oneline
+e5086a9 Pan con levadura
+c32cb21 Primera receta
+\end{codigo}
+\end{bloque}
+
+\anexo{Referencias}
+\begin{referencias}
+\referencia{PG}{Chacon, S. y Straub, B. \emph{Pro Git}, 2.ª edición. Secciones 3.1 «Branches in a Nutshell», 10.2 «Git Objects», 10.3 «Git References» y 10.4 «Packfiles». Licencia CC BY-NC-SA 3.0. \url{https://git-scm.com/book/en/v2}.}
+\referencia{GM}{Documentación oficial de Git, \cod{git-merge}: \url{https://git-scm.com/docs/git-merge}.}
+\referencia{GB}{Documentación oficial de Git, \cod{git-merge-base}: \url{https://git-scm.com/docs/git-merge-base}.}
+\referencia{GC}{Documentación oficial de Git, \cod{git-cat-file}: \url{https://git-scm.com/docs/git-cat-file}.}
+\referencia{R}{Repositorio de prueba de este informe, armado con \cod{demo.sh} (junto al documento) y Git 2.50.1. Autor, fechas y contenido son fijos, así que los hashes se reproducen.}
+\end{referencias}
+
+\end{document}

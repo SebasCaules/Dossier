@@ -1,0 +1,302 @@
+% A quién llamar, cuándo y cuántas veces — documento de lectura (skill /dossier). Para el área comercial de un banco ficticio: cómo planear la próxima campaña de depósitos a plazo con los datos de las anteriores.
+% Perfil: medio — texto normal — imágenes más — lector cliente — formato digital — temas=5
+% Pedido: «medio lector=cliente +imagenes temas=5»
+% Medir:  python3 ~/.claude/skills/dossier/scripts/medir.py medio-campana-depositos.tex --paginas 9 --paginas-min 7 --paginas-texto 2.7 --parte-texto 0.3 --densa 550 --visuales-min 14 --lector cliente
+% Regenerar:  python3 graficos.py && latexmk -lualatex medio-campana-depositos.tex
+% Datos: datos/bank-additional-full.csv (Bank Marketing, UCI; ver README.md). Cifras: python3 graficos.py cifras
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{dossier}
+\documento{Campaña de depósitos a plazo}{A quién llamar, cuándo y cuántas veces}{Ejemplo de /dossier}
+
+\begin{document}
+
+% ============================ PÁGINA 1 ============================
+\portada{Banco de Ejemplo (ficticio) · área comercial · depósitos a plazo}
+  {A quién llamar, cuándo y cuántas veces}
+  {Qué enseñan 41.188 clientes de campañas anteriores para planear la próxima}
+  {Propone: equipo de análisis de datos. Para: área comercial del Banco de Ejemplo. 28/09/2026. Cada cifra lleva en gris su fuente.}
+
+\begin{cifras}[4]
+  \cifra{Aceptaron}{11,3\%}{4.640 de 41.188 clientes llamados \fuente{BM}}
+  \cifra{Llamadas por depósito}{22,8}{105.754 llamadas en total \fuente{BM}}
+  \cifra{Si ya aceptó antes}{65,1\%}{vuelve a aceptar \fuente{BM}}
+  \cifra{Hasta el 3.º intento}{88\%}{de los depósitos, con el 73\% de las llamadas \fuente{BM}}
+\end{cifras}
+
+\resumen[La recomendación]
+\textbf{A quién, primero.} Llamar en cuatro grupos, A a D: primero a quienes aceptaron en
+una campaña anterior y después a quienes ya fueron contactados o tienen 24 años o menos, o 60
+o más. En las campañas de 2009 y 2010, el 20\% de arriba de esa lista trajo el 38\% de los
+depósitos \fuente{BM}.
+
+\textbf{Qué se gana.} Un depósito del grupo A costó 2,8 llamadas; uno del grupo D, 63,2
+\fuente{BM}. Llamar antes a quien más acepta baja el costo de cada depósito.
+
+\textbf{Cuántas veces.} Tres intentos por cliente en los grupos B, C y D. Del cuarto en
+adelante se hizo una de cada cuatro llamadas y llegó uno de cada ocho depósitos
+\fuente{BM}. En el grupo A conviene insistir: ahí, del cuarto intento en adelante, rindió
+22,2 depósitos cada 100 llamadas.
+
+\textbf{Cuándo.} El contexto pesó más que la fecha: la aceptación pasó de 4,8\% en 2008 a
+52,1\% en 2010 \fuente{BM}. Lo que sí se elige es el día: el lunes fue el peor en los tres
+años.
+
+\textbf{De su lado.} Guardar el resultado de cada campaña por cliente, preferir el celular y
+separar un grupo de control para medir la mejora \chip{propuesta}.
+
+\ojo[Antes de lanzar]{Estas cifras muestran qué pasó, no por qué. Por eso la propuesta
+empieza con una prueba: la mitad de la lista con estas reglas y la otra mitad como siempre
+\ver[qué se necesita de su lado]{sec:lado}.}
+
+\figura{fig/f11_costo.pdf}{Llamadas hechas por cada depósito conseguido, en todo el período: el grupo A (azul) necesitó 23 veces menos que el D \fuente{BM}.}
+
+\indicelista
+
+\begin{bloque}[La propuesta en cinco pasos. Los cuatro primeros cambian cómo se llama; el quinto mide si sirvió.]
+\proceso{Ordenar en grupos A a D/1/neutro, Llamar al celular/2/neutro, Tres intentos (salvo el A)/3/neutro, Evitar los lunes/4/neutro, Comparar con un control/5/neutro}
+\end{bloque}
+
+% ============================ A QUIÉN ============================
+\newpage
+\section{A quién llamar primero: a quien ya dijo que sí}\label{sec:quien}
+
+El mejor aviso de un sí es un sí anterior: 65,1\% de quienes aceptaron en una campaña
+previa volvió a aceptar, contra 8,8\% de quienes nunca habían sido contactados
+\fuente{BM}. Con tres preguntas que el banco ya puede responder antes de llamar, la lista
+queda en cuatro grupos.
+
+\begin{bloque}[Tres preguntas ordenan la lista. En azul, el grupo A: son el 3,3\% de la lista y trajeron el 19,3\% de los depósitos. Porcentajes: parte que aceptó en todo el período \fuente{BM}.]
+\begin{tikzpicture}
+  \node[cajag,text width=2.9cm,anchor=west] (q1) at (0,0.875) {\textbf{¿Aceptó en una campaña anterior?}};
+  \node[cajag,text width=2.9cm,anchor=west] (q2) at (3.9,-0.35) {\textbf{¿Contactado antes, o con 24 años o menos, o 60 o más?}};
+  \node[cajag,text width=2.6cm,anchor=west] (q3) at (7.8,-1.4) {\textbf{¿Se lo llama al celular?}};
+  \node[cajaa,text width=4.9cm,anchor=west] (a) at (11.9,2.1) {\textbf{A · primero}\\aceptó el 65,1\%};
+  \node[cajag,text width=4.9cm,anchor=west] (b) at (11.9,0.7) {\textbf{B · segundo}\\aceptó el 16,8\%};
+  \node[cajag,text width=4.9cm,anchor=west] (c) at (11.9,-0.7) {\textbf{C · tercero}\\aceptó el 10,7\%};
+  \node[cajag,text width=4.9cm,anchor=west] (d) at (11.9,-2.1) {\textbf{D · al final}\\aceptó el 4,5\%};
+  \draw[flecha] (q1.east) -- ++(0.3,0) |- (a.west);
+  \draw[flecha] (q1.east) -- ++(0.3,0) |- (q2.west);
+  \draw[flecha] (q2.east) -- ++(0.3,0) |- (b.west);
+  \draw[flecha] (q2.east) -- ++(0.3,0) |- (q3.west);
+  \draw[flecha] (q3.east) -- ++(0.3,0) |- (c.west);
+  \draw[flecha] (q3.east) -- ++(0.3,0) |- (d.west);
+  \node[relacion] at ($(q1.east)+(0.3,0.6)$) {sí};
+  \node[relacion] at ($(q1.east)+(0.3,-0.6)$) {no};
+  \node[relacion] at ($(q2.east)+(0.3,0.5)$) {sí};
+  \node[relacion] at ($(q2.east)+(0.3,-0.5)$) {no};
+  \node[relacion] at ($(q3.east)+(0.3,0.4)$) {sí};
+  \node[relacion] at ($(q3.east)+(0.3,-0.4)$) {no};
+\end{tikzpicture}
+\end{bloque}
+
+Cada pregunta usa un dato que cambió la aceptación en todas las campañas: el resultado
+anterior, la edad y el tipo de teléfono. Los grupos C y D son el 82,6\% de la lista
+\fuente{BM}: no se descartan, se llaman cuando A y B ya se agotaron.
+
+\noindent\begin{columna}{0.48\linewidth}
+\figura{fig/f01_anterior.pdf}{Aceptación según la campaña anterior: un sí previo la multiplica por siete. Son 1.373 clientes que aceptaron, 4.252 que no y 35.563 sin campaña anterior \fuente{BM}.}
+\figura{fig/f02_edad.pdf}{Las dos puntas de edad aceptan más: 24\% hasta los 24 años y 40\% desde los 60, contra 10\% entre los 25 y los 59 \fuente{BM}.}
+\end{columna}\hfill
+\begin{columna}{0.48\linewidth}
+\figura{fig/f03_ocupacion.pdf}{Estudiantes y jubilados son los que más aceptan. La lista usa la edad, que los cubre en buena parte: 43\% de los estudiantes tiene hasta 24 años y 46\% de los jubilados, 60 o más \fuente{BM}.}
+\figura{fig/f04_telefono.pdf}{Para quien nunca fue contactado, el celular rinde más del doble que el fijo (11,7\% contra 4,7\%); para quien ya aceptó, el teléfono casi no cambia nada \fuente{BM}.}
+\end{columna}
+
+\subsection{La lista ordenada, puesta a prueba}
+
+Las reglas se armaron mirando las campañas hasta abril de 2009, donde el orden ya se
+cumplía (38,2\%, 10,1\%, 7,5\% y 4,0\% de aceptación de A a D), y se probaron con las de
+mayo de 2009 a noviembre de 2010 \fuente{BM}. En el segundo período la aceptación subió
+en los cuatro grupos, pero el orden se mantuvo. Llamar primero al 20\% de arriba de la
+lista trajo el 38,0\% de los depósitos; al azar habría traído el 20\%.
+
+\noindent\begin{columna}{0.48\linewidth}
+\figura{fig/f12_periodos.pdf}{Aceptación de cada grupo, en \%, con las campañas en las que se armaron las reglas (azul) y en las que se probaron (naranja) \fuente{BM}.}
+\end{columna}\hfill
+\begin{columna}{0.48\linewidth}
+\textbf{Los grupos B y C.} En el segundo período quedaron parejos: 20,7\% y 20,0\%
+\fuente{BM}. Si la prueba de la \ver[sección 4]{sec:lado} lo repite, B y C pueden
+llamarse juntos.
+
+\textbf{El grupo A crece solo.} Cada campaña suma clientes que aceptaron: hasta abril de
+2009 eran 102 y después, 1.271 \fuente{BM}.
+\end{columna}
+
+\noindent\begin{columna}{0.52\linewidth}
+\figura{fig/f05_ganancia.pdf}{La lista A a D rinde casi el doble que el azar en el primer 20\% (línea vertical). Dentro de cada grupo el orden es al azar; por eso la curva azul avanza en tramos rectos \fuente{BM}.}
+\end{columna}\hfill
+\begin{columna}{0.44\linewidth}
+\textbf{Un puntaje no suma, por ahora.} También se probó un puntaje estadístico con todos
+los datos conocidos antes de llamar, entrenado con las mismas campañas. En el 20\% de
+arriba trajo el 34,4\% de los depósitos, menos que las tres preguntas \fuente{BM}.
+
+Con la mitad de la lista, los dos quedan parejos: 62,3\% la lista y 62,1\% el puntaje
+\fuente{BM}. Tres preguntas se explican y se revisan sin herramientas nuevas; un puntaje
+necesita mantenimiento.
+\end{columna}
+
+\subsection{Lo que no hace falta mirar, y un dato que falta}
+
+Tener hipoteca o préstamo personal no cambió la aceptación. Sí lo hizo no tener el dato de
+mora: esos clientes aceptaron menos de la mitad que los que no estaban en mora \fuente{BM}.
+
+\figura{fig/f13_financieros.pdf}{Hipoteca y préstamo mueven la aceptación menos de un punto. Sin dato de mora (azul) aceptó el 5,2\%; sin mora, el 12,9\%. Quedan afuera 990 clientes sin dato de hipoteca ni préstamo y 3 en mora \fuente{BM}.}
+
+% ============================ CUÁNDO ============================
+\newpage
+\section{Cuándo llamar: el contexto manda y el lunes rinde menos}\label{sec:cuando}
+
+El mes no se puede elegir con estos datos: la aceptación siguió al contexto y al volumen
+de llamadas, que cambiaron juntos \fuente{BM}. Lo que sí se repite en los tres años es que
+el lunes rindió menos.
+
+\figura{fig/f06_meses.pdf}{Cuando el banco llamó a menos clientes por mes, aceptó una parte mayor: de 3,1\% en mayo de 2008, con 7.763 clientes, a más de 45\% en cada mes de 2010, con 229 clientes por mes en promedio. Punto hueco: mes con menos de 100 clientes; líneas punteadas: cambio de año. Mes del último contacto \fuente{BM}.}
+
+\noindent\begin{columna}{0.48\linewidth}
+\figura{fig/f07_euribor.pdf}{Con el euríbor a tres meses por debajo de 1\% aceptó el 45,7\% de 3.908 clientes; con 3\% o más, el 4,8\% de 27.690. Todo 2008 estuvo en ese último tramo \fuente{BM}.}
+
+La tasa, el volumen y el teléfono cambiaron a la vez: el celular pasó del 50,5\% de los
+contactos en 2008 al 91,8\% en 2009 \fuente{BM}. Los datos no separan qué pesó más. El
+euríbor a tres meses es un indicador diario que publica el Banco de Portugal \fuente{BM}:
+se conoce antes de lanzar la campaña.
+\end{columna}\hfill
+\begin{columna}{0.48\linewidth}
+\figura{fig/f08_dias.pdf}{Aceptación, en \%, según el día del último contacto. El lunes (azul) fue el día más bajo en 2008, 2009 y 2010 \fuente{BM}.}
+
+\textbf{Qué hacer.} Mover las llamadas del lunes al resto de la semana. En todo el período,
+aceptó el 9,9\% de los clientes con último contacto un lunes y el 11,6\% del resto
+\fuente{BM}. El lunes concentró 8.514 de los 41.188 clientes.
+
+\textbf{Qué mirar.} La aceptación de cada semana en las dos mitades de la prueba. El
+contexto mueve a las dos por igual; la diferencia entre ellas es lo que aportan las reglas
+\chip{propuesta}.
+\end{columna}
+
+% ============================ CUÁNTAS VECES ============================
+\newpage
+\section{Cuántas veces: tres intentos, salvo en el grupo A}\label{sec:veces}
+
+Con tres intentos llegó el 88,0\% de los depósitos, y cada intento rindió menos que el
+anterior: 5,6 depósitos cada 100 llamadas en el primero y 3,3 en el cuarto \fuente{BM}. El
+grupo A es la excepción: del cuarto intento en adelante rindió más que los primeros
+intentos de cualquier otro grupo.
+
+\figura{fig/f10_acumulado.pdf}{Hasta el tercer intento se hizo el 73\% de las llamadas y llegó el 88\% de los depósitos; el resto de las llamadas trajo el 12\% \fuente{BM}.}
+
+\noindent\begin{columna}{0.48\linewidth}
+\figura{fig/f09_intento.pdf}{Depósitos cada 100 llamadas en cada intento, en toda la lista. En azul, los tres intentos que se proponen. Cada depósito se cuenta en el último contacto con el cliente \fuente{BM}.}
+\end{columna}\hfill
+\begin{columna}{0.48\linewidth}
+\figura{fig/f14_intentos_grupo.pdf}{En el grupo A, los intentos del cuarto en adelante (naranja) rindieron 22,2 depósitos cada 100 llamadas: más que los tres primeros de B, C o D (azul) \fuente{BM}.}
+\end{columna}
+
+\begin{cifras}[3]
+  \cifra{Qué gana el tope en B, C y D}{27.832}{llamadas menos, el 26,3\% del total \fuente{BM}}
+  \cifra{Qué cuesta}{hasta 508}{depósitos, el 10,9\%, si no aceptan por otro camino \fuente{BM}}
+  \cifra{Grupo A, desde el 4.º intento}{22,2}{depósitos cada 100 llamadas \fuente{BM}}
+\end{cifras}
+
+La prueba mide cuántos de esos 508 depósitos se pierden de verdad. En el extremo, 869
+clientes recibieron más de diez llamadas, uno de ellos 56, y aceptaron 27 \fuente{BM}.
+
+% ============================ DE SU LADO ============================
+\newpage
+\section{Qué se necesita de su lado}\label{sec:lado}
+
+Las reglas usan solo datos que el banco tiene antes de llamar. La duración de la llamada
+queda afuera: se conoce recién al cortar, y la descripción del dataset pide dejarla fuera
+de cualquier predicción realista \fuente{BM}.
+
+\begin{bloque}[A la izquierda de la línea, lo que se sabe antes de llamar. Lo destacado en rosa se sabe al terminar y no se usa para ordenar la lista. El número junto a cada tipo dice cuántos datos tiene \fuente{BM}.]
+\begin{tikzpicture}
+  \node[grupo] (a) at (0,0)      {\grupo[2.5cm]{3.3cm}{Cliente · 7}{edad, ocupación, estado civil, estudios, mora, hipoteca, préstamo}};
+  \node[grupo] (b) at (4.095,0)  {\grupo[2.5cm]{1.7cm}{Contacto · 1}{teléfono}};
+  \node[grupo] (c) at (6.59,0)   {\grupo[2.5cm]{4.1cm}{Historia · 3}{días desde el último, contactos previos, resultado anterior}};
+  \node[grupo] (e) at (11.485,0) {\grupo[2.5cm]{3.0cm}{Contexto · 5}{euríbor, empleo, precios, confianza, empleados}};
+  \node[grupo] (f) at (15.28,0)  {\grupo[2.5cm]{1.7cm}{Al final · 4}{!duración, !intentos, !mes, !día}};
+  \draw[acento2,dashed,line width=0.9pt] (15.09,0.3) -- (15.09,-3.3);
+  \node[font=\scriptsize\bfseries,text=acento2,anchor=south east] at (15.0,0.02) {momento de llamar};
+  \coordinate (bus) at (0,-3.4);
+  \foreach \g in {a,b,c,e,f} \draw[bus] (\g.south) -- (\g.south |- bus);
+  \draw[bus] (a.south |- bus) -- (f.south |- bus);
+  \coordinate (medio) at ($(a.south |- bus)!0.5!(f.south |- bus)$);
+  \node[concepto central,minimum width=4.6cm] (y) at ($(medio)+(0,-0.75)$) {¿Acepta el depósito?};
+  \draw[rel] (medio) -- (y);
+\end{tikzpicture}
+\end{bloque}
+
+\begin{bloque}[Las cuatro decisiones, con lo que ganaron y costaron en las campañas anteriores \fuente{BM}.]
+\begin{tabularx}{\linewidth}{@{}P{3.3cm}LL@{}}
+\toprule
+\enc{Decisión} & \enc{Qué gana} & \enc{Qué cuesta} \\
+\midrule
+\textbf{Grupos A a D} & 38,0\% de los depósitos con el primer 20\% de la lista & registrar el resultado de cada campaña \\
+\textbf{Celular primero} & 11,7\% de aceptación contra 4,7\% del fijo, en clientes nuevos & tener un celular actualizado por cliente \\
+\textbf{Tres intentos, salvo el A} & 27.832 llamadas menos (26,3\%) & hasta 508 depósitos (10,9\%) \\
+\textbf{Sin lunes} & 11,6\% de aceptación el resto de la semana, contra 9,9\% & repartir las llamadas del lunes: 20,7\% de los clientes \\
+\bottomrule
+\end{tabularx}
+\end{bloque}
+
+\begin{itemize}
+\item \textbf{El resultado de cada campaña, por cliente.} Es el dato que más ordena la lista:
+sin él no hay grupo A. También el dato de mora: sin él, la aceptación cayó a 5,2\%
+\fuente{BM}.
+\item \textbf{Un celular por cliente.} Para quien nunca fue contactado, el celular rindió 11,7\%
+y el fijo 4,7\% \fuente{BM}.
+\item \textbf{Un contador de intentos.} El sistema de llamadas tiene que cortar en el tercero, salvo en el
+grupo A.
+\item \textbf{Un sorteo antes de empezar.} La mitad de la lista va con las reglas nuevas y la
+otra mitad, como siempre \chip{propuesta}.
+\end{itemize}
+
+\begin{bloque}[Esquema de la prueba que se propone. Las dos mitades salen del mismo sorteo y no se mezclan hasta comparar depósitos cada 100 llamadas.]
+\begin{tikzpicture}
+  \path (0,0) (17.4,0);
+  \carril{0}{1.5}{PRUEBA}
+  \carril{-1.75}{1.5}{CONTROL}
+  \node[cajag,fill=white,text width=2.4cm] (lista) at (2.2,-0.125) {\textbf{Lista}\\sorteo en dos mitades};
+  \node[cajag,fill=white,text width=2.9cm] (orden) at (6.4,0.75) {\textbf{Grupos A a D}\\celular primero};
+  \node[cajag,fill=white,text width=2.9cm] (tope) at (10.3,0.75) {\textbf{3 intentos, salvo A}\\sin lunes};
+  \node[cajag,fill=white,text width=6.8cm] (igual) at (8.35,-1.0) {\textbf{Como en campañas anteriores}};
+  \node[cajaa,text width=2.6cm] (comp) at (15.4,-0.125) {\textbf{Comparar}\\depósitos cada 100 llamadas};
+  \draw[rel] (lista.east) -- ++(0.3,0) |- (orden.west);
+  \draw[rel] (lista.east) -- ++(0.3,0) |- (igual.west);
+  \draw[rel] (orden) -- (tope);
+  \draw[rel] (tope.east) -| ($(comp.north)+(-0.4,0)$);
+  \draw[rel] (igual.east) -| ($(comp.south)+(-0.4,0)$);
+\end{tikzpicture}
+\end{bloque}
+
+% ============================ DE DÓNDE SALEN ============================
+\newpage
+\section{De dónde salen las cifras y qué no dicen}\label{sec:datos}
+
+El Banco de Ejemplo es ficticio. Sus «campañas anteriores» son las del dataset público
+Bank Marketing: llamadas de un banco portugués para vender depósitos a plazo, de mayo de
+2008 a noviembre de 2010 \fuente{BM}, descritas por Moro, Cortez y Rita \fuente{MCR}. El
+archivo tiene 41.188 filas, una por cliente llamado, con 20 datos y el resultado.
+
+Todas las cifras son cálculos propios sobre ese archivo, con el código que acompaña a este
+documento. El archivo no trae el año: se reconstruyó con su orden, que es el de las
+fechas. Día, mes y tipo de teléfono son los del último contacto con el cliente.
+
+\textbf{Lo que estas cifras no dicen.}
+
+\begin{itemize}
+\item \textbf{Cuánto vale un depósito.} El archivo no trae montos ni el costo de una llamada;
+por eso las ganancias se miden en depósitos y en llamadas, no en dinero.
+\item \textbf{Por qué acepta un cliente.} Son asociaciones: un lunes con menos depósitos no
+prueba que el lunes los espante. La prueba con grupo de control es la que lo decide.
+\item \textbf{Si valen hoy.} Son campañas de 2008 a 2010, con un contexto que cambió mucho
+entre un año y otro. El orden de los grupos se mantuvo en los dos períodos; las tasas, no.
+\end{itemize}
+
+\anexo{Referencias}
+\begin{referencias}
+\referencia{BM}{Moro, S., Rita, P. y Cortez, P. Bank Marketing [dataset]. UCI Machine Learning Repository, 2014. Licencia CC BY 4.0. Archivo \cod{bank-additional-full.csv} y su descripción, \cod{bank-additional-names.txt}: \url{https://doi.org/10.24432/C5K306}.}
+\referencia{MCR}{Moro, S., Cortez, P. y Rita, P. A Data-Driven Approach to Predict the Success of Bank Telemarketing. \emph{Decision Support Systems}, 2014. \url{https://doi.org/10.1016/j.dss.2014.03.001}.}
+\end{referencias}
+
+\end{document}

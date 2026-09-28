@@ -1,0 +1,321 @@
+% Cómo funciona HTTPS: de la URL al candado — guía de estudio (skill /dossier). Qué pasa entre escribir una dirección https y ver el candado, y qué protege ese candado.
+% Perfil: breve — texto normal — imágenes normal — lector estudio — formato digital — temas=4
+% Pedido: «/dossier breve lector=estudio: un resumen para estudiar cómo funciona HTTPS: de la URL al candado (DNS, TCP, el handshake de TLS 1.3, certificados y cadena de confianza, qué protege y qué no)»
+% Medir:  python3 ~/.claude/skills/dossier/scripts/medir.py breve-https.tex --paginas 5 --paginas-min 2 --paginas-texto 2.0 --parte-texto 0.4 --densa 550 --visuales-min 4 --lector estudio
+% Regenerar:  python3 graficos.py && latexmk -lualatex breve-https.tex
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{dossier}
+\documento{HTTPS · de la URL al candado}{Cómo funciona HTTPS: de la URL al candado}{Ejemplo de /dossier}
+
+\begin{document}
+
+% ============================ PÁGINA 1: todo el documento en una página ============================
+\portada{Redes · guía de estudio}
+  {Cómo funciona HTTPS: de la URL al candado}
+  {Qué pasa entre escribir una dirección y ver el candado, y qué garantiza ese candado}
+  {Resumen para estudiar. Cada dato lleva en gris su fuente; las siglas remiten a las referencias del final.}
+
+\begin{cifras}[4]
+  \cifra{Puerto por defecto}{443}{si la URL https no indica otro \fuente{RFC 9110, §4.2.2}}
+  \cifra{Handshake de TLS 1.3}{1 RTT}{TLS 1.2 necesitaba 2 \fuente{RFC 8446 · RFC 5246}}
+  \cifra{Hasta la respuesta}{3 RTT}{TCP, TLS 1.3 y HTTP, sin el DNS (cuenta propia)}
+  \cifra{Controles por certificado}{4}{firma, vigencia, revocación y emisor \fuente{RFC 5280, §6.1.3}}
+\end{cifras}
+
+\resumen
+\textbf{Del nombre a la conexión.} El navegador traduce el nombre a una dirección IP con
+DNS, abre una conexión TCP al puerto 443 y sobre ella negocia TLS \fuente{RFC 9110, §4.3.3}.
+TCP gasta un viaje de ida y vuelta (RTT) antes de que el cliente pueda enviar datos
+\fuente{RFC 9293, §3.5}.
+
+\textbf{El handshake.} En TLS 1.3, cliente y servidor acuerdan las claves en un solo RTT, y
+todo lo que sigue al ServerHello viaja cifrado \fuente{RFC 8446, §1.2 y §2}. En una conexión
+nueva, la primera respuesta HTTP llega a los 3 RTT.
+
+\textbf{La identidad.} El certificado X.509 ata el nombre del servidor a una clave pública, y
+el servidor firma el handshake con la clave privada. El navegador sigue la cadena de firmas
+hasta una raíz que ya tiene \fuente{RFC 5280, §6.1}.
+
+\textbf{El alcance.} HTTPS cifra la ruta, los encabezados y el cuerpo, y detecta a quien se
+haga pasar por el servidor. No oculta la IP, el nombre del sitio ni el tamaño y el ritmo del
+tráfico \fuente{RFC 8446, §1.2 y §E.3 · RFC 9110, §4.3.3}.
+
+\ojo[Lo que el candado no dice]{Que el sitio sea honesto. Para emitir un certificado, Let's
+Encrypt solo le pide a quien lo solicita que pruebe que controla el dominio
+\fuente{LE-validación}.}
+
+\begin{bloque}[El camino prepara el handshake; handshake y certificado determinan lo que HTTPS protege. Cada caja lleva a su sección.]
+\begin{tikzpicture}
+  \foreach \x/\capa in {0/EL CAMINO, 6.52/EL MECANISMO, 13.04/EL ALCANCE}
+    \node[etiqueta,font=\scriptsize\ttfamily,text=rotulo,anchor=south west] at (\x,1.4) {\capa};
+  \node[cajag,anchor=west] (m1) at (0,0)
+    {\arriba{0.65cm}{3.9cm}{\hyperref[sec:camino]{\textbf{01 De la URL a TCP}}\\DNS y un RTT de TCP}};
+  \node[cajag,anchor=west] (m2) at (6.52,0.65)
+    {\arriba{0.65cm}{3.9cm}{\hyperref[sec:handshake]{\textbf{02 El handshake}}\\claves en un solo RTT}};
+  \node[cajag,anchor=west] (m3) at (6.52,-0.65)
+    {\arriba{0.65cm}{3.9cm}{\hyperref[sec:certificados]{\textbf{03 Certificado y cadena}}\\quién es el servidor}};
+  \node[cajag,anchor=west] (m4) at (13.04,0)
+    {\arriba{0.65cm}{3.9cm}{\hyperref[sec:alcance]{\textbf{04 Qué protege y qué no}}\\contenido sí, metadatos no}};
+  \draw[bus] (m2.west) -- ++(-0.25,0) |- (m3.west);
+  \draw[bus] (m2.east) -- ++(0.25,0) |- (m3.east);
+  \draw[rel] (m1.east) -- node[relacion,above] {prepara} ($(m2.west)+(-0.25,-0.65)$);
+  \draw[rel] ($(m2.east)+(0.25,-0.65)$) -- node[relacion,above] {determinan} (m4.west);
+\end{tikzpicture}
+\end{bloque}
+
+% ============================ 01 ============================
+\section{La URL fija el destino; DNS y TCP abren el camino}\label{sec:camino}
+
+El esquema https obliga a asegurar la conexión antes de enviar la petición: el servidor
+tiene que estar autenticado y la comunicación, cifrada y protegida contra cambios
+\fuente{RFC 9110, §4.2.2}.
+
+\begin{bloque}[Cada parte de la URL la usa una capa distinta. En azul, lo único que viaja cifrado, dentro de la petición HTTP \fuente{MDN-TLS}; el host viaja en claro ({\ver[sección 04]{sec:alcance}}).]
+\begin{tikzpicture}
+  \path (0,0.4) (17.4,0);
+  \begin{scope}[every node/.style={anchor=base west,inner sep=1.5pt,font=\ttfamily\large,text=tinta}]
+    \node (esq) at (5.0,0) {https};
+    \node[text=apagado] (sep) at (esq.base east) {://};
+    \node (host) at (sep.base east) {example.com};
+    \node (pto) at (host.base east) {:443};
+    \node (ruta) at (pto.base east) {/docs/?q=tls};
+  \end{scope}
+  \foreach \p in {esq,host,pto,ruta}
+    \draw[linea,line width=1.2pt] ([xshift=1pt]\p.south west) -- ([xshift=-1pt]\p.south east);
+  \node[cajag,anchor=north] (b1) at (2.0,-1.05)
+    {\arriba{1.05cm}{3.5cm}{\textbf{Esquema}\\exige una conexión asegurada con TLS}};
+  \node[cajag,anchor=north] (b2) at (6.47,-1.05)
+    {\arriba{1.05cm}{3.5cm}{\textbf{Host}\\DNS lo traduce a una dirección IP}};
+  \node[cajag,anchor=north] (b3) at (10.94,-1.05)
+    {\arriba{1.05cm}{3.5cm}{\textbf{Puerto}\\443 si la URL no indica otro}};
+  \node[cajaa,inner sep=6pt,font=\footnotesize,anchor=north] (b4) at (15.4,-1.05)
+    {\arriba{1.05cm}{3.5cm}{\textbf{Ruta y consulta}\\van dentro de la petición HTTP, cifradas}};
+  \draw[rel] (esq.south) -- ++(0,-0.3) -| (b1.north);
+  \draw[rel] (host.south) -- ++(0,-0.3) -| (b2.north);
+  \draw[rel] (pto.south) -- ++(0,-0.6) -| (b3.north);
+  \draw[rel] (ruta.south) -- ++(0,-0.3) -| (b4.north);
+\end{tikzpicture}
+\end{bloque}
+
+\textbf{Paso 1: DNS.} El resolvedor traduce el nombre a una IP consultando servidores de
+nombres en el puerto 53 \fuente{RFC 1035, §4.2}. Puede necesitar varias consultas y un tiempo
+arbitrario, y guarda las respuestas en una caché \fuente{RFC 1035, §2.2}: por eso este resumen
+no lo cuenta entre los RTT. Una respuesta falsa puede llevar a otra IP; verificar el
+certificado detecta a quien controla la resolución \fuente{RFC 9110, §4.3.4}.
+
+\textbf{Paso 2: TCP.} El cliente envía un SYN, el servidor responde con SYN,ACK y, al
+recibirlo, el cliente ya puede mandar datos junto con su ACK \fuente{RFC 9293, §3.5, fig. 6}.
+La conexión cuesta un RTT y prepara el camino para TLS.
+
+\ojo[Confusión típica]{Creer que llegar a la IP y al puerto 443 prueba que se habla con el
+sitio. HTTPS no usa TCP ni el puerto para decidir la autoridad, porque quedan fuera de la
+comunicación asegurada; la prueba es el certificado \fuente{RFC 9110, §4.3.3}.}
+
+\begin{repaso}
+\item ¿Qué parte de la URL viaja cifrada, y dónde viaja el host en claro?
+\item ¿Por qué el DNS no entra en la cuenta de RTT?
+\item ¿Por qué llegar a la IP y al puerto correctos no prueba la identidad del servidor?
+\end{repaso}
+
+% ============================ 02 ============================
+\section{TLS 1.3 acuerda las claves en un solo viaje de ida y vuelta}\label{sec:handshake}
+
+\textbf{Definición.} El handshake es «una negociación inicial entre cliente y servidor que
+establece los parámetros de sus interacciones posteriores» \fuente{RFC 8446, §1.1}. En
+TLS 1.3 tiene tres fases \fuente{RFC 8446, §2}:
+
+\begin{itemize}
+\item \textbf{Intercambio de claves.} El ClientHello ofrece versiones y cifrados y lleva su
+  parte del acuerdo de claves (\cod{key_share}); el ServerHello responde con la suya. De ahí
+  salen las claves, y lo que sigue va cifrado.
+\item \textbf{Parámetros del servidor.} EncryptedExtensions, y CertificateRequest si pide
+  certificado al cliente, algo raro en la web \fuente{MDN-TLS}.
+\item \textbf{Autenticación.} Certificate lleva el certificado; CertificateVerify, una firma
+  del handshake con la clave privada; Finished, un código de autenticación (MAC) del
+  handshake que confirma las claves.
+\end{itemize}
+
+\begin{bloque}[\textbf{Ejemplo.} Una visita nueva: tres RTT hasta la primera respuesta \fuente{RFC 9293, fig. 6 · RFC 8446, fig. 1}. Sobre celeste, lo que viaja cifrado: todo lo que sigue al ServerHello, con claves del handshake \{…\} o de la aplicación {[\,…\,]}.]
+\begin{tikzpicture}[msg/.style={-{Stealth[length=5pt]},line width=0.8pt,color=rotulo},
+    cif/.style={-{Stealth[length=5pt]},line width=0.9pt,color=acento},
+    txt/.style={font=\scriptsize,inner sep=2pt,sloped,above,text=rotulo},
+    txtc/.style={txt,text=acento}]
+  \path (0,0.6) (17.4,0);
+  \def\xc{4.4} \def\xs{16.2} \def\d{1.2}
+  \node[font=\footnotesize\bfseries,text=tinta] at (\xc,0.45) {Cliente};
+  \node[font=\footnotesize\bfseries,text=tinta] at (\xs,0.45) {Servidor};
+  \fill[suave] (\xs,-3*\d) -- (\xc,-4*\d) -- (\xc,-6*\d-0.15) -- (\xs,-6*\d-0.15) -- cycle;
+  \draw[linea,line width=1.2pt] (\xc,0.2) -- (\xc,-6*\d-0.15);
+  \draw[linea,line width=1.2pt] (\xs,0.2) -- (\xs,-6*\d-0.15);
+  \draw[msg] (\xc,0) -- node[txt] {SYN} (\xs,-\d);
+  \draw[msg] (\xs,-\d) -- node[txt] {SYN,ACK} (\xc,-2*\d);
+  \draw[msg] (\xc,-2*\d) -- node[txt] {ACK · ClientHello + key\_share + server\_name} (\xs,-3*\d);
+  \draw[msg] (\xs,-3*\d) -- node[txt] {ServerHello + key\_share}
+    node[txtc,below,align=center] {\{EncryptedExtensions, Certificate,\\CertificateVerify, Finished\}} (\xc,-4*\d);
+  \draw[cif] (\xc,-4*\d) -- node[txtc,below] {\{Finished\} · [GET /docs/?q=tls]} (\xs,-5*\d);
+  \draw[cif] (\xs,-5*\d) -- node[txtc,below] {[200 OK y la página]} (\xc,-6*\d);
+  \foreach \ya/\yb/\r in {0/2/TCP · 1 RTT, 2/4/TLS 1.3 · 1 RTT, 4/6/HTTP · 1 RTT} {
+    \draw[rotulo,line width=0.6pt] (\xc-0.25,-\ya*\d-0.05) -- (\xc-0.45,-\ya*\d-0.05)
+      -- (\xc-0.45,-\yb*\d+0.05) -- (\xc-0.25,-\yb*\d+0.05);
+    \node[etiqueta,anchor=east,font=\scriptsize\bfseries] at (\xc-0.55,{-(\ya+\yb)/2*\d}) {\r};
+  }
+\end{tikzpicture}
+\end{bloque}
+
+\noindent\begin{columna}{0.55\linewidth}
+\figura{fig/f1_viajes.pdf}{RTT hasta la primera respuesta, sin el DNS: cuenta propia sobre los diagramas de las RFC. En negrita, TLS 1.3 completo.}
+\end{columna}\hfill
+\begin{columna}{0.41\linewidth}
+TLS 1.3 ahorra un RTT frente a TLS 1.2, que esperaba dos antes de los datos
+\fuente{RFC 5246, fig. 1}. Si el servidor no acepta el \cod{key_share} del cliente, responde
+con HelloRetryRequest, el ClientHello se repite y el ahorro se pierde
+\fuente{RFC 8446, §2.1}.
+
+Con una clave precompartida (PSK) de una conexión anterior, el cliente puede mandar la
+petición junto al ClientHello: es el modo 0-RTT \fuente{RFC 8446, §2.2 y §2.3}.
+\end{columna}
+
+\ojo[Confusión típica]{Suponer que los datos 0-RTT tienen las garantías del resto. No tienen
+secreto hacia adelante, porque se cifran solo con claves de la PSK, y nada impide repetirlos
+entre conexiones \fuente{RFC 8446, §2.3}. Secreto hacia adelante: una clave de largo plazo
+filtrada después no compromete la sesión \fuente{RFC 8446, §E.1}.}
+
+\begin{repaso}
+\item ¿Qué lleva el ClientHello para que las claves salgan en un solo RTT?
+\item ¿Qué prueba CertificateVerify y qué confirma Finished?
+\item ¿Cuándo se pierde el RTT que ahorra TLS 1.3?
+\item ¿Qué dos garantías les faltan a los datos 0-RTT?
+\end{repaso}
+
+% ============================ 03 ============================
+\section{El certificado ata un nombre a una clave, y la cadena lo avala}\label{sec:certificados}
+
+\textbf{Definición.} Validar una ruta de certificación es verificar el vínculo entre el
+nombre del sujeto y la clave pública del certificado final a partir de la clave de un ancla
+de confianza \fuente{RFC 5280, §6.1}. El certificado lleva además el emisor, la vigencia y los
+nombres DNS en \cod{subjectAltName} \fuente{RFC 5280, §4.1.2.5 y §4.2.1.6}; solo uno con
+\cod{cA} verdadero en \cod{basicConstraints} firma otros \fuente{RFC 5280, §4.2.1.9}. El
+servidor manda su certificado y después los que lo certifican; el ancla puede faltar, porque
+el cliente ya la tiene \fuente{RFC 8446, §4.4.2}.
+
+\begin{bloque}[\textbf{Ejemplo.} La cadena por defecto de un certificado RSA que emite Let's Encrypt YR1. Root YR aún no está en los almacenes de los navegadores: por eso la firma también ISRG Root X1, el ancla, en azul \fuente{LE-cadenas}.]
+\begin{tikzpicture}
+  \path (0,0.5) (17.4,0);
+  \node[etiqueta,font=\scriptsize\ttfamily,text=rotulo,anchor=south west] at (0,0.62) {LO ENVÍA EL SERVIDOR};
+  \node[etiqueta,font=\scriptsize\ttfamily,text=rotulo,anchor=south west] at (13.78,0.62) {LO TIENE EL NAVEGADOR};
+  \node[cajag,anchor=north west] (ee) at (0,0.5)
+    {\arriba{1.05cm}{3.2cm}{\textbf{example.com}\\certificado final: nombre y clave pública}};
+  \node[cajag,anchor=north west] (yr1) at (4.58,0.5)
+    {\arriba{1.05cm}{3.2cm}{\textbf{Let's Encrypt YR1}\\intermedia RSA 2048, vigente hasta 2028-09-02}};
+  \node[cajag,anchor=north west] (ryr) at (9.16,0.5)
+    {\arriba{1.05cm}{3.2cm}{\textbf{Root YR}\\raíz nueva, fuera de los almacenes}};
+  \node[cajaa,inner sep=6pt,font=\footnotesize,anchor=north west] (x1) at (13.78,0.5)
+    {\arriba{1.05cm}{3.2cm}{\textbf{ISRG Root X1}\\confiable hasta 2030-06-04}};
+  \draw[linea,dashed,line width=0.9pt] (13.47,1.0) -- (13.47,-1.35);
+  \draw[rel] (yr1.west) -- node[relacion,above] {firma} (ee.east);
+  \draw[rel] (ryr.west) -- node[relacion,above] {firma} (yr1.east);
+  \draw[rel] (x1.west) -- node[relacion,above,pos=0.3] {firma} (ryr.east);
+\end{tikzpicture}
+\end{bloque}
+
+De cada certificado, el cliente verifica la firma, la vigencia, que no esté revocado y que
+su emisor sea el sujeto del anterior \fuente{RFC 5280, §6.1.3}. Después compara el nombre de la
+URL con el certificado final.
+
+\begin{bloque}[Cualquier «no» lleva al error, con borde terracota: el navegador tiene que pedir confirmación al usuario o cortar la conexión \fuente{RFC 9110, §4.3.4}.]
+\begin{tikzpicture}
+  \path (0,0) (17.4,0);
+  \node[cajag,anchor=north west] (q1) at (0,0)
+    {\arriba{0.65cm}{3.4cm}{\textbf{¿Cada certificado pasa los cuatro controles?}}};
+  \node[cajag,anchor=north west] (q2) at (4.52,0)
+    {\arriba{0.65cm}{3.4cm}{\textbf{¿La cadena llega a una raíz del almacén?}}};
+  \node[cajag,anchor=north west] (q3) at (9.04,0)
+    {\arriba{0.65cm}{3.4cm}{\textbf{¿El nombre de la URL está en el certificado?}}};
+  \node[cajag,anchor=north west] (ok) at (13.56,0)
+    {\arriba{0.65cm}{3.4cm}{\textbf{Identidad verificada}\\sigue el handshake}};
+  \draw[flecha] (q1) -- node[relacion,above] {sí} (q2);
+  \draw[flecha] (q2) -- node[relacion,above] {sí} (q3);
+  \draw[flecha] (q3) -- node[relacion,above] {sí} (ok);
+  \coordinate (bus) at (0,-1.4);
+  \foreach \q in {q1,q2,q3} {
+    \draw[bus] (\q.south) -- (\q.south |- bus);
+    \node[relacion,anchor=west] at ($(\q.south)+(0.05,-0.16)$) {no};
+  }
+  \draw[bus] (q1.south |- bus) -- (q3.south |- bus);
+  \node[cajag,fill=suave2,draw=acento2,line width=0.8pt,anchor=north] (err) at ($(q2.south |- bus)+(0,-0.35)$)
+    {\textbf{Error de certificado:} confirmar con el usuario o cortar};
+  \draw[rel] (q2.south |- bus) -- (err.north);
+\end{tikzpicture}
+\end{bloque}
+
+\ojo[Confusión típica]{Buscar el nombre del sitio en el Common Name (CN). El cliente arma
+la identidad de referencia como DNS-ID con el host de la URL; una CN-ID no debe usarse
+\fuente{RFC 9110, §4.3.4}.}
+
+\begin{repaso}
+\item ¿Qué une un certificado X.509, y qué campo dice si puede firmar otros?
+\item ¿Qué cuatro controles pasa cada certificado de la ruta?
+\item ¿Por qué Root YR necesita la firma de ISRG Root X1?
+\item ¿Qué tiene que hacer el navegador si el nombre no coincide?
+\end{repaso}
+
+% ============================ 04 ============================
+\section{HTTPS protege el contenido y la identidad, no los metadatos}\label{sec:alcance}
+
+Handshake y certificado determinan juntos lo que HTTPS protege: el servidor queda
+autenticado y los datos, cifrados e íntegros \fuente{RFC 8446, §1}. Lo que viaja fuera de TLS
+lo ve cualquiera en la red.
+
+\begin{bloque}[A la izquierda, lo que ve la red aunque se use HTTPS \fuente{RFC 9110, §4.3.3 · RFC 8446, §E.3}; a la derecha, lo que queda dentro de TLS \fuente{MDN-TLS}. En rosa, el nombre en el ClientHello: va en claro porque solo se cifra lo que sigue al ServerHello \fuente{RFC 8446, §1.2}.]
+\begin{tikzpicture}
+  \node[grupo] (red) at (0,0)
+    {\grupo[1.85cm]{8.1cm}{Lo ve la red}{IP y puerto, nombre en la consulta DNS, !nombre en el ClientHello, tamaño y ritmo del tráfico}};
+  \node[grupo] (tls) at (8.95,0)
+    {\grupo[1.85cm]{8.03cm}{Solo lo ven cliente y servidor}{ruta y consulta, encabezados, cookies, cuerpo de la petición, cuerpo de la respuesta}};
+  \draw[acento2,dashed,line width=0.9pt] (8.72,0.1) -- (8.72,-2.2);
+  \node[fill=white,inner sep=1.5pt,rotate=90,font=\scriptsize\bfseries,text=acento2] at (8.72,-1.05) {TLS};
+\end{tikzpicture}
+\end{bloque}
+
+\begin{bloque}[HTTPS impide o detecta los ataques al contenido y a la identidad; la primera visita, el 0-RTT y los metadatos necesitan otras defensas.]
+\small
+\begin{tabularx}{\linewidth}{@{}P{4.6cm}LP{2.6cm}@{}}
+\toprule
+\enc{Amenaza} & \enc{Qué hace HTTPS} & \enc{Fuente} \\
+\midrule
+Alguien en el medio lee o cambia el tráfico & Lo impide: cifrado, integridad y autenticación del servidor & \fuente{MDN-TLS} \\
+Una respuesta DNS falsa lleva a otra IP & Lo detecta: el certificado no coincide con el nombre & \fuente{RFC 9110, §4.3.4} \\
+Degradar a http la primera visita (SSL stripping) & HSTS lo evita en las siguientes; la lista de precarga, también en la primera & \fuente{MDN-TLS} \\
+Un script pedido por http en una página https (contenido mixto) & El navegador pasa la petición a https o la bloquea & \fuente{MDN-TLS} \\
+Repetir datos 0-RTT & TLS no lo impide; el servidor puede limitarlo & \fuente{RFC 8446, §8} \\
+Deducir el contenido por el tamaño y el ritmo & No lo impide; el relleno de los registros lo dificulta & \fuente{RFC 8446, §E.3} \\
+\bottomrule
+\end{tabularx}
+\end{bloque}
+
+HSTS es el encabezado \cod{Strict-Transport-Security}: pide al navegador que las próximas
+visitas vayan directo por https \fuente{MDN-TLS}. Con DoH, la consulta DNS viaja dentro de
+HTTPS y los equipos del camino no pueden interferir \fuente{RFC 8484, §1}.
+
+\begin{repaso}
+\item ¿Qué datos de una visita ve un observador de la red, y por qué?
+\item ¿Por qué una respuesta DNS falsa no alcanza para suplantar un sitio https?
+\item ¿Qué evita HSTS, y qué agrega la lista de precarga?
+\end{repaso}
+
+\anexo{Referencias}
+\begin{referencias}
+\referencia{RFC 8446}{E. Rescorla, \emph{The Transport Layer Security (TLS) Protocol Version 1.3}, IETF, 2018: \url{https://www.rfc-editor.org/rfc/rfc8446}.}
+\referencia{RFC 5246}{T. Dierks y E. Rescorla, \emph{The TLS Protocol Version 1.2}, IETF, 2008: \url{https://www.rfc-editor.org/rfc/rfc5246}.}
+\referencia{RFC 9110}{R. Fielding, M. Nottingham y J. Reschke (eds.), \emph{HTTP Semantics}, IETF, 2022: \url{https://www.rfc-editor.org/rfc/rfc9110}.}
+\referencia{RFC 9293}{W. Eddy (ed.), \emph{Transmission Control Protocol (TCP)}, IETF, 2022: \url{https://www.rfc-editor.org/rfc/rfc9293}.}
+\referencia{RFC 1035}{P. Mockapetris, \emph{Domain Names — Implementation and Specification}, IETF, 1987: \url{https://www.rfc-editor.org/rfc/rfc1035}.}
+\referencia{RFC 8484}{P. Hoffman y P. McManus, \emph{DNS Queries over HTTPS (DoH)}, IETF, 2018: \url{https://www.rfc-editor.org/rfc/rfc8484}.}
+\referencia{RFC 5280}{D. Cooper y otros, \emph{Internet X.509 Public Key Infrastructure Certificate and CRL Profile}, IETF, 2008: \url{https://www.rfc-editor.org/rfc/rfc5280}.}
+\referencia{MDN-TLS}{MDN Web Docs, \emph{Transport Layer Security (TLS)}: \url{https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Transport_Layer_Security}.}
+\referencia{LE-cadenas}{Let's Encrypt, \emph{Chains of Trust}, actualizada el 8 de julio de 2026: \url{https://letsencrypt.org/certificates/}.}
+\referencia{LE-validación}{Let's Encrypt, \emph{How It Works}: \url{https://letsencrypt.org/how-it-works/}.}
+\end{referencias}
+
+\end{document}

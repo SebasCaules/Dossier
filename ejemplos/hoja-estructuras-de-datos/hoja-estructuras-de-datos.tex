@@ -1,0 +1,113 @@
+% Doce estructuras de datos en una hoja — hoja de consulta (skill /dossier).
+% Perfil: hoja — texto menos — imágenes normal — lector según el pedido — formato impresión — items=12
+% Pedido: «/dossier 1 hoja impresion -texto items=12 — Una hoja de consulta para imprimir: el costo de las operaciones (buscar, insertar, borrar, recorrer en orden) en doce estructuras de datos, con cuándo conviene cada una.»
+% Medir:  python3 ~/.claude/skills/dossier/scripts/medir.py hoja-estructuras-de-datos.tex --paginas 1 --paginas-texto 0.3 --parte-texto 0.3 --densa 400 --visuales-min 1
+% Regenerar:  python3 graficos.py && latexmk -lualatex hoja-estructuras-de-datos.tex
+% Fuentes (siglas de \fuente): CLRS = Cormen, Leiserson, Rivest y Stein, Introduction to
+% Algorithms, 4.ª ed., MIT Press, 2022 (el número es el capítulo); SW = Sedgewick y Wayne,
+% Algorithms, 4.ª ed., Addison-Wesley, 2011 (el número es la sección); W = Wikipedia en
+% inglés, artículo de cada estructura, consultado el 28/09/2026.
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[impresion]{dossier}
+\documento{Estructuras de datos}{Doce estructuras de datos en una hoja}{Ejemplo de /dossier}
+
+% Fila de grupo dentro de la tabla: \grupofila{Secuencias}{nota}. El 6 es el número de columnas.
+\newcommand{\grupofila}[2]{\multicolumn{6}{@{}l@{}}{\rule{0pt}{11pt}{\scriptsize\ttfamily\bfseries
+  \color{acento}\MakeUppercase{#1}}\enspace{\scriptsize\color{apagado}#2}}\\}
+% Peor caso, cuando difiere del promedio: segundo renglón de la celda, en gris.
+\newcommand{\peor}[1]{\newline{\color{apagado}#1}}
+% Amortizado: promedio sobre una secuencia de operaciones.
+\newcommand{\am}{^{*}}
+
+\begin{document}
+
+\portada*{Algoritmos · hoja de consulta}
+  {Doce estructuras de datos en una hoja}
+  {Costo de cada operación y cuándo conviene}
+
+\ojo[Cómo leer la tabla]{$n$ claves. Arriba, el promedio; abajo, en gris, el peor caso si
+difiere; $^{*}$: amortizado. Borrar incluye buscar la clave; insertar supone que no está.}
+
+{\footnotesize\setlength{\tabcolsep}{3.5pt}\renewcommand{\arraystretch}{1.2}%
+\begin{tabularx}{\linewidth}{@{}P{2.75cm}P{1.45cm}P{1.45cm}P{1.45cm}P{1.6cm}L@{}}
+\toprule
+\enc{Estructura} & \enc{Buscar} & \enc{Insertar} & \enc{Borrar} & \enc{Recorrer en orden} & \enc{Cuándo conviene} \\
+\midrule
+\grupofila{Secuencias}{}
+\textbf{Arreglo dinámico}\newline\fuente{CLRS 16 · W} & $O(n)$ & $O(1)\am$\peor{$O(n)$} & $O(n)$ & $O(n\log n)$ &
+  Acceso por posición y altas al final. \\
+\textbf{Arreglo ordenado}\newline\fuente{SW 3.1} & $O(\log n)$ & $O(n)$ & $O(n)$ & $O(n)$ &
+  Datos casi fijos, muy consultados. \\
+\textbf{Lista doble}\newline\fuente{CLRS 10} & $O(n)$ & $O(1)$ & $O(n)$ & $O(n\log n)$ &
+  Altas y bajas en un nodo ya ubicado. \\
+\grupofila{Tablas hash}{sin orden; carga $\alpha$ acotada}
+\textbf{Hash con listas}\newline\fuente{CLRS 11 · SW 3.4} & $O(1)$\peor{$O(n)$} & $O(1)$ & $O(1)$\peor{$O(n)$} & $O(n\log n)$ &
+  Clave exacta; tolera borrados. \\
+\textbf{Hash con sondeo}\newline\fuente{CLRS 11 · SW 3.4} & $O(1)$\peor{$O(n)$} & $O(1)$\peor{$O(n)$} & $O(1)$\peor{$O(n)$} & $O(n\log n)$ &
+  Memoria contigua, $\alpha$ bajo, pocos borrados. \\
+\grupofila{Búsqueda con orden}{costo $O(h)$; $h$: altura}
+\textbf{Árbol binario de búsqueda (ABB)}\newline\fuente{CLRS 12 · SW 3.2} & $O(\log n)$\peor{$O(n)$} & $O(\log n)$\peor{$O(n)$} & $O(\log n)^{\dagger}$\peor{$O(n)$} & $O(n)$ &
+  Claves al azar; ordenadas, degenera en lista. \\
+\textbf{AVL}\newline\fuente{W} & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(n)$ &
+  Búsquedas: más bajo que un rojo-negro, $h < 1{,}44\log_2(n+2)$. \\
+\textbf{Rojo-negro}\newline\fuente{CLRS 13} & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(n)$ &
+  Muchos cambios: $h \le 2\log_2(n+1)$, hasta 3 rotaciones. \\
+\textbf{Splay}\newline\fuente{W} & $O(\log n)\am$\peor{$O(n)$} & $O(\log n)\am$\peor{$O(n)$} & $O(\log n)\am$\peor{$O(n)$} & $O(n)$ &
+  Accesos repetidos: lo reciente sube a la raíz. \\
+\textbf{Árbol B}\newline\fuente{CLRS 18} & $O(\log n)$ & $O(\log n)$ & $O(\log n)$ & $O(n)$ &
+  Disco: lee $O(\log_t n)$ bloques ($t$: grado mínimo). \\
+\textbf{Skip list}\newline\fuente{W} & $O(\log n)$\peor{$O(n)$} & $O(\log n)$\peor{$O(n)$} & $O(\log n)$\peor{$O(n)$} & $O(n)$ &
+  Orden sin rotaciones: niveles al azar. \\
+\grupofila{Prioridad}{}
+\textbf{Montículo binario}\newline\fuente{CLRS 6 · W} & $O(n)$ & $O(1)$\peor{$O(\log n)$} & $O(n)$ & $O(n\log n)$ &
+  Cola de prioridad: mínimo en $O(1)$, sacarlo en $O(\log n)$. \\
+\bottomrule
+\end{tabularx}}
+
+% La pieza que relaciona los ítems: sobre qué base se arma cada uno.
+\begin{bloque}[Todo parte del arreglo o la lista. El ABB suma la búsqueda binaria y los enlaces \fuente{SW 3.2}; AVL y rojo-negro evitan su peor caso; splay, en amortizado. Punteada: equivalencia \fuente{W}.]
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \tikzset{d/.style={concepto,una linea,font=\scriptsize,minimum width=2.45cm},
+           verbo/.style={relacion,align=center}}
+  % bases, a la izquierda
+  \node[d] (arr) at (1.225,1.5)  {Arreglo dinámico};
+  \node[d] (son) at (1.225,0.5)  {Hash con sondeo};
+  \node[d] (lis) at (1.225,-1.5) {Lista doble};
+  \node[d] (has) at (1.225,-0.5) {Hash con listas};
+  % segunda columna
+  \node[d] (mon) at (4.95,1.5)   {Montículo binario};
+  \node[d] (ord) at (4.95,0.5)   {Arreglo ordenado};
+  \node[d] (ski) at (4.95,-0.5)  {Skip list};
+  % árboles
+  \node[d] (abb) at (8.675,0.5) {ABB};
+  \node[d] (avl) at (12.4,1.5)   {AVL};
+  \node[d] (rn)  at (12.4,0.5)   {Rojo-negro};
+  \node[d] (spl) at (12.4,-0.5)  {Splay};
+  \node[d] (bt)  at (16.125,0.5) {Árbol B};
+  % relaciones
+  \draw[rel] (arr) -- node[verbo,above=1pt] {árbol en\\arreglo} (mon);
+  \draw[rel] (arr.south east) -- node[verbo,above right=-1pt,pos=0.45] {ordenar} (ord.west);
+  \draw[rel] (arr) -- node[verbo,right=2pt] {dispersar} (son);
+  \draw[rel] (lis) -- node[verbo,right=2pt] {una por casilla} (has);
+  \draw[rel] (lis.east) -- node[verbo,below right=-1pt,pos=0.55] {niveles al azar} (ski.south west);
+  \draw[rel] (ord) -- node[verbo,above=1pt] {búsqueda\\binaria} (abb);
+  \draw[rel] (lis.east) -- node[verbo,below=1pt,pos=0.75] {enlaces} (abb.south |- lis.east) -- (abb.south);
+  \draw[rel] (abb.east) -- node[verbo,above left=-1pt,pos=0.6] {alturas} (avl.west);
+  \draw[rel] (abb) -- node[verbo,above=1pt] {colores} (rn);
+  \draw[rel] (abb.east) -- node[verbo,below left=-1pt,pos=0.6] {autoajuste} (spl.west);
+  \draw[rel,dashed,{Stealth[length=4.5pt]}-{Stealth[length=4.5pt]}] (rn) -- node[verbo,above=1pt] {$t = 2$} (bt);
+\end{tikzpicture}
+\end{bloque}
+
+\noindent\begin{columna}{0.58\linewidth}
+\figura{fig/f1_alturas.pdf}{Balancear baja la altura de 999.999 (terracota) a 39 o menos. Cálculo propio: \cod{graficos.py}.}
+\end{columna}\hfill
+\begin{columna}{0.38\linewidth}
+{\footnotesize\color{apagado}
+\textbf{Fuentes.} CLRS: Cormen y otros, \textit{Introduction to Algorithms}, 4.ª ed.
+(capítulo). SW: Sedgewick y Wayne, \textit{Algorithms}, 4.ª ed. (sección). W: Wikipedia.\par\smallskip
+$^{\dagger}$\,SW: $O(\sqrt{n})$ tras muchas bajas al azar.\par}
+\end{columna}
+
+\end{document}

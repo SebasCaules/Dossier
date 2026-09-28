@@ -1,0 +1,63 @@
+% TÍTULO — una hoja de lectura (skill /dossier). Para quién y qué responde.
+% Regenerar:  python3 graficos.py && latexmk -lualatex doc.tex
+% Todo el contenido de abajo es de ejemplo: se reemplaza entero. Todo entra en una página.
+\documentclass[10pt,a4paper]{article}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{dossier}
+\documento{Proyecto · Título corto}{Título completo del documento}{Autor o equipo}
+
+% Identidad del proyecto (opcional): redefinir la paleta con sus tokens, por ejemplo
+% \definecolor{acento}{HTML}{22456F}
+
+\begin{document}
+
+\portada{Materia o proyecto · equipo · contexto}
+  {Título que dice de qué trata}
+  {Subtítulo: la pregunta que la hoja responde, en una línea}
+  {Para quién es y fecha.}
+
+\begin{cifras}[4]
+  \cifra{Fuentes revisadas}{9}{5 controles cada una}
+  \cifra{Decisiones}{12}{9 cerradas · 3 abiertas}
+  \cifra{Fuera de plazo}{28,1\%}{de 3.265 tickets \fuente{R14}}
+  \cifra{Filas del registro}{21.748}{31 columnas \fuente{R02}}
+\end{cifras}
+
+% Resumen: tres párrafos; con -texto, tres viñetas. El título dice el mensaje de la hoja.
+\resumen[Título que dice el mensaje de la hoja]
+\textbf{Qué pasó.} La respuesta primero, con sujeto y verbo, y la cifra que la sostiene
+\fuente{R14}.
+
+\textbf{Qué cambió.} Lo que el lector sabía y ya no vale, y por qué.
+
+\textbf{Qué sigue.} La próxima decisión, con fecha.
+
+% El pie dice primero qué se lleva el lector; después, si hace falta, cómo leer la figura.
+\figura{fig/f1_ejemplo.pdf}{Quitar duplicados mueve poco la cifra; el mes de medición la mueve
+mucho \fuente{R14 · R01}.}
+
+% Dos columnas: una pieza junto al aviso, alineadas por arriba.
+\noindent\begin{columna}{0.5\linewidth}
+\figura{fig/f2_categorias.pdf}{2025 quedó 40 clientes por debajo de 2024 \fuente{R03}.}
+\end{columna}\hfill
+\begin{columna}{0.46\linewidth}
+\ojo[Antes del 18/05]{Lo único que el lector no puede pasar por alto.}
+\end{columna}
+
+% Una fila por decisión: qué gana y qué cuesta, en pocas palabras.
+\begin{tabularx}{\linewidth}{@{}P{3.4cm}LL@{}}
+\toprule
+\enc{Decisión} & \enc{Qué gana} & \enc{Qué cuesta} \\
+\midrule
+\textbf{Quitar duplicados} & una cifra por pedido & dos días \\
+\textbf{Medir a fin de mes} & comparar meses & un corte fijo \\
+\textbf{Sumar la regla nueva} & menos falsos avisos & \chip{propuesta} \\
+\bottomrule
+\end{tabularx}
+\medskip
+
+\begin{bloque}[Azul oscuro: hecho. Celeste: en curso. Gris: lo que falta.]
+\proceso[2]{Relevamiento/A1/hecho, Datos y calidad/A2/hecho, Modelo/A3/actual, Plan y piloto/A4/futuro}
+\end{bloque}
+
+\end{document}
