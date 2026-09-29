@@ -389,9 +389,11 @@ $9 \times 0{,}30 \times 800 = 2.160$ palabras.
 Con `temas=`<var>t</var> o `items=`<var>i</var>, las páginas <var>p</var> salen de la portada
 más lo que ocupa cada tema o ítem, dentro del rango del largo:
 
-```math
-p = \min\Bigl(p_{\max},\ \max\bigl(p_{\min},\ 1 + \lceil t \cdot k_t \rceil,\ 1 + \lceil i \cdot k_i \rceil\bigr)\Bigr)
-```
+<div align="center">
+
+$`\displaystyle p = \min\Bigl(p_{\max},\ \max\bigl(p_{\min},\ 1 + \lceil t \cdot k_t \rceil,\ 1 + \lceil i \cdot k_i \rceil\bigr)\Bigr)`$
+
+</div>
 
 | | `breve` | `medio` | `largo` |
 |:--|--:|--:|--:|
@@ -403,18 +405,20 @@ El tope de prosa es la parte de texto del perfil por las páginas y por 800 pala
 hoja, las partes son 0,30, 0,45 y 0,60; con `+texto` hay además un piso, el 40 % de las
 páginas (salvo en una hoja).
 
-```math
-W = p \cdot f \cdot 800, \qquad
-f = \begin{cases} 0{,}25 & \texttt{-texto} \\ 0{,}40 & \text{normal} \\ 0{,}60 & \texttt{+texto} \end{cases}
-\; + \; \begin{cases} +0{,}10 & \texttt{-imagenes} \\ 0 & \text{normal} \\ -0{,}10 & \texttt{+imagenes} \end{cases}
-```
+<div align="center">
+
+$`\displaystyle W = p \cdot f \cdot 800, \qquad f = \begin{cases} 0{,}25 & \texttt{-texto} \\ 0{,}40 & \text{normal} \\ 0{,}60 & \texttt{+texto} \end{cases} \; + \; \begin{cases} +0{,}10 & \texttt{-imagenes} \\ 0 & \text{normal} \\ -0{,}10 & \texttt{+imagenes} \end{cases}`$
+
+</div>
 
 El mínimo de piezas visuales es una meta, no una cuota: se completa con material real o no se
 completa, y el reporte lo dice. Con `-imagenes` también hay un máximo, <var>p</var>.
 
-```math
-V_{\min} = \begin{cases} \lfloor p/2 \rfloor & \texttt{-imagenes} \\ \max(1,\ p - 1) & \text{normal} \\ \max\bigl(2,\ \lceil 1{,}5\,p \rceil\bigr) & \texttt{+imagenes} \end{cases}
-```
+<div align="center">
+
+$`\displaystyle V_{\min} = \begin{cases} \lfloor p/2 \rfloor & \texttt{-imagenes} \\ \max(1,\ p - 1) & \text{normal} \\ \max\bigl(2,\ \lceil 1{,}5\,p \rceil\bigr) & \texttt{+imagenes} \end{cases}`$
+
+</div>
 
 Si los temas o los ítems no entran en el largo, `perfil.py` lo avisa antes de escribir:
 <samp>AVISO: 10 temas × 2,5 + portada = 26 páginas: no entran en largo (máx. 24); agrupar temas.</samp>
