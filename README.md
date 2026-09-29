@@ -10,35 +10,30 @@ Los PDFs de [`ejemplos/`](ejemplos/) están hechos con la skill.
 
 ## Instalar
 
-Con [`npx skills`](https://github.com/vercel-labs/skills) (hace falta Node.js), desde la
-carpeta del proyecto:
+Un comando instala la skill y todo lo que necesita, y al final compila una hoja de prueba.
+No pide permisos de administrador. Hace falta Node.js y Python 3.9 o más nuevo.
 
 ```bash
-npx skills add SebasCaules/Dossier -a claude-code        # solo en este proyecto
-npx skills add SebasCaules/Dossier -a claude-code -g     # en todos los proyectos
+npx github:SebasCaules/Dossier       # en el proyecto donde está parado: .claude/skills/dossier
+npx github:SebasCaules/Dossier -g    # para todos los proyectos: ~/.claude/skills/dossier
 ```
 
-La primera deja la skill en `.claude/skills/dossier` del proyecto (se puede subir al repo
-para que la tenga todo el equipo); la segunda, en `~/.claude/skills/dossier`. Para
-actualizarla, `npx skills update dossier`; para quitarla, `npx skills remove dossier`
-(con `-g` si es la global).
+Instala, solo si falta:
 
-Sin Node, a mano:
+- **LaTeX**: TinyTeX, una versión chica de TeX Live, en `~/Library/TinyTeX` (macOS) o
+  `~/.TinyTeX` (Linux), con los paquetes y las letras que usa la skill. Si ya hay TeX Live
+  o MacTeX, solo le suma los paquetes que le falten.
+- **Python**: un entorno propio en `~/.local/share/dossier/venv` con matplotlib, numpy,
+  Pillow, pypdf, pdfplumber y pypdfium2. Los scripts de la skill lo usan solos.
 
-```bash
-git clone https://github.com/SebasCaules/Dossier.git
-mkdir -p ~/.claude/skills && cp -R Dossier/dossier ~/.claude/skills/
-```
+La primera vez descarga unos 150 MB (ocupa unos 550 MB: TinyTeX y el entorno de Python) y
+tarda de uno a cinco minutos, según la conexión; con LaTeX ya instalado, mucho menos. Para
+actualizar, el mismo comando. Otras opciones: `--capturas` (suma Playwright, para capturas de pantalla),
+`--verificar`, `--solo-skill` y `--desinstalar`. En Windows, dentro de WSL.
 
-Además hace falta:
-
-| | macOS | Ubuntu / Debian |
-|---|---|---|
-| LaTeX (LuaLaTeX y latexmk) | `brew install --cask mactex-no-gui` | `sudo apt install texlive-full` |
-| Poppler (`pdftoppm`, `pdftotext`) | `brew install poppler` | `sudo apt install poppler-utils` |
-| Python 3 | `pip3 install matplotlib numpy pillow pypdf pdfplumber` | igual |
-
-En macOS usa la letra Avenir Next; en otros sistemas cae sola a TeX Gyre Heros.
+Con [`npx skills`](https://github.com/vercel-labs/skills) también se instala, pero solo la
+skill: `npx skills add SebasCaules/Dossier -a claude-code` (con `-g`, global). Lo demás lo
+instala la skill la primera vez que se usa, después de pedir permiso.
 
 ## Usar
 
@@ -97,14 +92,16 @@ Hechos con la skill, sobre temas y fuentes públicas. Cada imagen abre su PDF; c
 ## Qué hay adentro
 
 ```
-dossier/
+bin/dossier.js     ← el instalador que corre npx
+dossier/           ← la skill, tal como queda en .claude/skills/dossier
 ├── SKILL.md       ← el procedimiento que sigue Claude
 ├── plantilla/     ← dossier.sty (estilo LaTeX), plantillas .tex y estilo de los gráficos
 ├── scripts/       ← perfil.py (parámetros → números), nuevo.py, medir.py, revisar.py
+│                     y dependencias.py (dice qué falta y lo instala)
 └── referencias/   ← componentes, diagramas, escritura y problemas conocidos
 ```
 
 ## Actualizar
 
-Con `npx skills update dossier` (o, si se instaló a mano, `git pull` en el clon y volver a
-copiar la carpeta `dossier/`).
+`npx github:SebasCaules/Dossier` (con `-g` si es la global) reemplaza la skill por la última
+versión; lo que ya está instalado no se vuelve a descargar.

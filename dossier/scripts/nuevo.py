@@ -32,6 +32,7 @@ AQUI = Path(__file__).resolve().parent
 PLANTILLA = AQUI.parent / "plantilla"
 sys.path.insert(0, str(AQUI))
 sys.dont_write_bytecode = True
+import _entorno  # noqa: E402
 from perfil import calcular, parsear  # noqa: E402
 
 NOMBRES = {"mas": "más", "menos": "menos", "normal": "normal"}
@@ -40,6 +41,7 @@ EJEMPLOS = {"fig/f1_ejemplo.pdf": "ejemplo", "fig/f2_categorias.pdf": "ejemplo_c
 
 
 def main() -> int:
+    _entorno.usar()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("carpeta")
     ap.add_argument("--perfil", default="", help="parámetros de /dossier, entre comillas")

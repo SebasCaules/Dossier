@@ -26,6 +26,9 @@ def main() -> int:
     ap.add_argument("--esperar", type=int, default=800, help="milisegundos después de cargar")
     ap.add_argument("--completa", action="store_true", help="toda la página, no solo la ventana")
     a = ap.parse_args()
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import _entorno
+    _entorno.usar()
 
     try:
         from playwright.sync_api import sync_playwright

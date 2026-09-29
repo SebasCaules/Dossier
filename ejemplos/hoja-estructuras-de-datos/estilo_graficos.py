@@ -11,11 +11,23 @@ si el documento adopta los colores de un proyecto, los gráficos los siguen solo
 """
 from __future__ import annotations
 
+import os
 import re
+import sys
 from pathlib import Path
 
-import matplotlib
-import numpy as np
+# Con el entorno de Python que deja dependencias.py, el script que importa este archivo
+# (graficos.py) vuelve a correr con ese Python, que tiene matplotlib. Es la misma ruta que
+# usa scripts/_entorno.py; DOSSIER_ENTORNO evita el bucle.
+_VENV = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / "dossier" / "venv"
+_PY = _VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+if (_PY.exists() and not os.environ.get("DOSSIER_ENTORNO") and sys.argv and sys.argv[0].endswith(".py")
+        and Path(sys.argv[0]).exists() and Path(sys.prefix).resolve() != _VENV.resolve()):
+    os.environ["DOSSIER_ENTORNO"] = "1"
+    os.execv(str(_PY), [str(_PY), "-B"] + sys.argv)
+
+import matplotlib  # noqa: E402
+import numpy as np  # noqa: E402
 
 matplotlib.use("pdf")
 import matplotlib.pyplot as plt  # noqa: E402

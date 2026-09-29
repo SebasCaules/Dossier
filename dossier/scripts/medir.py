@@ -58,8 +58,12 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+import _entorno  # noqa: E402
+import _pdf  # noqa: E402
 
 PALABRAS_POR_PAGINA = 800
 ALTO_CAJA_CM = 26.5  # caja de texto de dossier.sty: de 16 mm a 281 mm desde arriba
@@ -530,22 +534,12 @@ def errores_de_compilacion(log: str) -> list[str]:
 
 
 def paginas_pdf(pdf: Path) -> int:
-    try:
-        from pypdf import PdfReader
-        return len(PdfReader(str(pdf)).pages)
-    except Exception:
-        r = subprocess.run(["pdfinfo", str(pdf)], capture_output=True)
-        m = re.search(r"^Pages:\s+(\d+)", r.stdout.decode("utf-8", "replace"), re.M)
-        return int(m.group(1)) if m else 0
+    return _pdf.paginas(pdf)
 
 
 def palabras_crudas(pdf: Path) -> list[int]:
-    """Todas las palabras de cada página, como las extrae pdftotext."""
-    r = subprocess.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True)
-    paginas = r.stdout.decode("utf-8", "replace").split("\f")
-    if paginas and not paginas[-1].strip():
-        paginas = paginas[:-1]
-    return [len(PALABRA.findall(p)) for p in paginas]
+    """Todas las palabras de cada página (pdftotext, o pypdfium2 sin poppler)."""
+    return [len(PALABRA.findall(p)) for p in _pdf.textos(pdf)]
 
 
 def lectura_del_pdf(pdf: Path, clase_pt: int) -> list[dict] | None:
@@ -604,33 +598,28 @@ def llenado_por_pagina(pdf: Path, cortes: list[float | None] | None = None) -> l
     como fracciones de la caja de texto de dossier.sty (de 16 mm a 281 mm desde arriba; el
     encabezado queda afuera). Si la página tiene notas al pie, se mide hasta su filete."""
     try:
-        from PIL import Image
-    except ImportError:
+        imagenes = _pdf.imagenes(pdf, 30, gris=True)
+    except (ImportError, OSError, subprocess.CalledProcessError):  # sin Pillow o sin con qué dibujar
         return []
-    with tempfile.TemporaryDirectory() as tmp:
-        subprocess.run(["pdftoppm", "-r", "30", "-gray", str(pdf), f"{tmp}/p"],
-                       check=True, capture_output=True)
-        llenado = []
-        imagenes = sorted(Path(tmp).glob("p-*.pgm"), key=lambda q: int(q.stem.split("-")[-1]))
-        for n, imagen in enumerate(imagenes):
-            im = Image.open(imagen)
-            ancho, alto = im.size
-            arriba, abajo = int(alto * 0.054), int(alto * 0.947)
-            zona = im.crop((0, arriba, ancho, abajo)).point(lambda v: 255 if v < 200 else 0)
-            filas = [zona.crop((0, y, ancho, y + 1)).getbbox() is not None for y in range(zona.size[1])]
-            corte = cortes[n] if cortes and n < len(cortes) else None
-            if corte is not None:  # la zona de notas no es ni hueco ni texto de la página
-                filas = filas[:max(0, int(corte * len(filas)) - 1)]
-            con_tinta = [y for y, hay in enumerate(filas) if hay]
-            if not con_tinta:
-                llenado.append((0.0, 0.0))
-                continue
-            hueco = actual = 0
-            for y in range(con_tinta[0], con_tinta[-1] + 1):
-                actual = 0 if filas[y] else actual + 1
-                hueco = max(hueco, actual)
-            llenado.append(((con_tinta[-1] + 1) / (abajo - arriba), hueco / (abajo - arriba)))
-        return llenado
+    llenado = []
+    for n, im in enumerate(imagenes):
+        ancho, alto = im.size
+        arriba, abajo = int(alto * 0.054), int(alto * 0.947)
+        zona = im.crop((0, arriba, ancho, abajo)).point(lambda v: 255 if v < 200 else 0)
+        filas = [zona.crop((0, y, ancho, y + 1)).getbbox() is not None for y in range(zona.size[1])]
+        corte = cortes[n] if cortes and n < len(cortes) else None
+        if corte is not None:  # la zona de notas no es ni hueco ni texto de la página
+            filas = filas[:max(0, int(corte * len(filas)) - 1)]
+        con_tinta = [y for y, hay in enumerate(filas) if hay]
+        if not con_tinta:
+            llenado.append((0.0, 0.0))
+            continue
+        hueco = actual = 0
+        for y in range(con_tinta[0], con_tinta[-1] + 1):
+            actual = 0 if filas[y] else actual + 1
+            hueco = max(hueco, actual)
+        llenado.append(((con_tinta[-1] + 1) / (abajo - arriba), hueco / (abajo - arriba)))
+    return llenado
 
 
 def problemas_del_log(log: str) -> list[str]:
@@ -746,6 +735,7 @@ def main() -> int:
     ap.add_argument("--outdir", default="_build", help="carpeta de auxiliares, relativa al .tex")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
+    _entorno.usar()
 
     tex = Path(a.tex).expanduser().resolve()
     if not tex.exists():
@@ -919,7 +909,7 @@ def main() -> int:
                      + "; ".join(f"la página {p} ({coma((1 - f) * ALTO_CAJA_CM)} cm libres)" for p, f in a_medias)
                      + ". Se acepta, o se mueve un párrafo o se achica una pieza para cerrarlo.")
     if lectura is None:
-        notas.append("sin pdfplumber, las palabras por página son todas las del PDF (pdftotext), "
+        notas.append("sin pdfplumber, las palabras por página son todas las del PDF, "
                      "no solo las de la letra del cuerpo.")
 
     if a.json:

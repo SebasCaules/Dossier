@@ -1,6 +1,6 @@
 ---
 name: dossier
-version: "0.4.0"
+version: "0.4.1"
 description: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N. \u2028Arma PDFs de lectura (resúmenes, informes, documentos para un equipo o un cliente, guías de estudio) con gráficos, diagramas, capturas y navegación cliqueable, a la medida de esos parámetros, y los verifica midiendo el largo y mirando cada página. Usar siempre que el usuario pida un PDF para leer o compartir que resuma o explique algo («un PDF con lo que hicimos», «un resumen en PDF del parcial», «un documento mediano con más gráficos», «una hoja con lo esencial»), aunque no nombre la skill, y para acortar, alargar o rehacer un PDF así. No usar para manipular PDFs existentes (unir, dividir, extraer texto, formularios: skill pdf) ni para diapositivas."
 argument-hint: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N."
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill, AskUserQuestion
@@ -45,10 +45,13 @@ Sinónimos aceptados: `short`/`medium`/`long`, `more-images`, `less-text`, `prin
 ## Antes de empezar
 
 `SKILL_DIR` es la carpeta de este archivo (el harness la informa al cargar la skill).
-Requisitos: `lualatex` y `latexmk` (TeX Live), `pdfinfo`, `pdftoppm` y `pdftotext`
-(poppler) y `python3` con matplotlib, Pillow (blancos de cada página) y pdfplumber
-(palabras por página en la letra del cuerpo; sin él, `medir.py` cuenta todo el PDF y lo
-dice en una `Nota`). Playwright solo hace falta para capturas.
+Requisitos: LaTeX con `lualatex` y `latexmk`, y Python con matplotlib, Pillow, pypdf,
+pdfplumber y pypdfium2. `python3 "SKILL_DIR/scripts/dependencias.py"` dice qué falta, y
+con `instalar` lo instala sin permisos de administrador: TinyTeX si no hay LaTeX (ocupa
+unos 350 MB) y un entorno de Python propio en `~/.local/share/dossier/venv` (unos 200 MB),
+que los scripts usan solos; al final compila una hoja de prueba. Si falta algo, pedirle
+permiso al usuario antes de instalar. Poppler no hace falta (si está, se usa); Playwright
+solo para capturas (`instalar --capturas`).
 
 ## 1. Fijar el perfil y el encargo
 

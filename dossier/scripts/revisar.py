@@ -14,9 +14,13 @@ lo que ese lector necesita.
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True
+import _entorno  # noqa: E402
+import _pdf  # noqa: E402
 
 QUE_MIRAR = """Qué buscar en cada página:
   - tablas, listas o párrafos cortados entre dos páginas; títulos solos al pie;
@@ -57,11 +61,7 @@ def rango(texto: str, total: int) -> list[int]:
 
 
 def total_paginas(pdf: Path) -> int:
-    r = subprocess.run(["pdfinfo", str(pdf)], capture_output=True)
-    for linea in r.stdout.decode("utf-8", "replace").splitlines():
-        if linea.startswith("Pages:"):
-            return int(linea.split()[1])
-    return 0
+    return _pdf.paginas(pdf)
 
 
 def main() -> int:
@@ -73,6 +73,7 @@ def main() -> int:
     ap.add_argument("--lector", choices=["equipo", "estudio", "entrega", "cliente"],
                     help="suma a la lista lo que ese lector necesita")
     a = ap.parse_args()
+    _entorno.usar()
 
     pdf = Path(a.pdf).expanduser().resolve()
     if not pdf.exists():
@@ -89,18 +90,12 @@ def main() -> int:
             viejo.unlink()
     rutas = []
     for n in elegidas:
-        base = salida / f"pagina-{n:02d}"
-        subprocess.run(["pdftoppm", "-r", str(a.dpi), "-png", "-singlefile", "-f", str(n), "-l", str(n),
-                        str(pdf), str(base)], check=True)
-        rutas.append(base.with_suffix(".png"))
+        rutas.append(_pdf.guardar_png(pdf, a.dpi, n, salida / f"pagina-{n:02d}"))
 
-    hoja_base = salida / "chica"
-    subprocess.run(["pdftoppm", "-r", str(a.hoja_dpi), "-png", str(pdf), str(hoja_base)], check=True)
-    chicas = sorted(salida.glob("chica-*.png"))
     try:
         from PIL import Image
 
-        imagenes = [Image.open(p) for p in chicas]
+        imagenes = _pdf.imagenes(pdf, a.hoja_dpi)
         ancho, alto = imagenes[0].size
         columnas = min(5, len(imagenes))
         filas = (len(imagenes) + columnas - 1) // columnas
@@ -109,11 +104,9 @@ def main() -> int:
         for k, im in enumerate(imagenes):
             hoja.paste(im, (margen + (k % columnas) * (ancho + margen), margen + (k // columnas) * (alto + margen)))
         hoja.save(salida / "hoja.png")
-        for p in chicas:
-            p.unlink()
         print(f"Hoja con {plural(len(imagenes), 'la única página', f'las {len(imagenes)} páginas')}: {salida / 'hoja.png'}")
     except ImportError:
-        print("Sin Pillow no hay hoja de contacto; quedan las miniaturas chica-*.png.")
+        print("Sin Pillow no hay hoja de contacto (python3 dependencias.py instalar lo trae).")
     print("Páginas para leer una por una:")
     for r in rutas:
         print(f"  {r}")

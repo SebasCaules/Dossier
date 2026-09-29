@@ -1,0 +1,26 @@
+{
+  "name": "dossier-skill",
+  "version": "0.4.1",
+  "description": "Skill /dossier para Claude Code: PDFs de lectura con LaTeX (resúmenes, informes, hojas de consulta). Instala la skill y lo que necesita.",
+  "bin": {
+    "dossier-skill": "bin/dossier.js"
+  },
+  "files": [
+    "bin/",
+    "dossier/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SebasCaules/Dossier.git"
+  },
+  "homepage": "https://github.com/SebasCaules/Dossier#readme",
+  "keywords": [
+    "claude-code",
+    "skill",
+    "latex",
+    "pdf"
+  ]
+}
