@@ -10,6 +10,21 @@ Los PDFs de [`ejemplos/`](ejemplos/) están hechos con la skill.
 
 ## Instalar
 
+Con [`npx skills`](https://github.com/vercel-labs/skills) (hace falta Node.js), desde la
+carpeta del proyecto:
+
+```bash
+npx skills add SebasCaules/Dossier -a claude-code        # solo en este proyecto
+npx skills add SebasCaules/Dossier -a claude-code -g     # en todos los proyectos
+```
+
+La primera deja la skill en `.claude/skills/dossier` del proyecto (se puede subir al repo
+para que la tenga todo el equipo); la segunda, en `~/.claude/skills/dossier`. Para
+actualizarla, `npx skills update dossier`; para quitarla, `npx skills remove dossier`
+(con `-g` si es la global).
+
+Sin Node, a mano:
+
 ```bash
 git clone https://github.com/SebasCaules/Dossier.git
 mkdir -p ~/.claude/skills && cp -R Dossier/dossier ~/.claude/skills/
@@ -52,15 +67,32 @@ parámetro parecido; si no, la skill pregunta.
 
 ## Ejemplos
 
-| Ejemplo | Pedido | Páginas |
-|---|---|---|
-| [Doce estructuras de datos](ejemplos/hoja-estructuras-de-datos/hoja-estructuras-de-datos.pdf) | `1 hoja impresion -texto items=12` | 1 |
-| [Cómo funciona HTTPS](ejemplos/breve-https/breve-https.pdf) | `breve lector=estudio` | 4 |
-| [Cómo guarda Git la historia](ejemplos/breve-git-por-dentro/breve-git-por-dentro.pdf) | `breve lector=entrega impresion` | 5 |
-| [A quién llamar en una campaña](ejemplos/medio-campana-depositos/medio-campana-depositos.pdf) | `medio lector=cliente +imagenes` | 7 |
+Hechos con la skill, sobre temas y fuentes públicas. Cada imagen abre su PDF; cada carpeta trae el
+`.tex`, el código de los gráficos y un README con el pedido y las fuentes.
 
-Cada carpeta trae el `.tex`, el código de sus gráficos y un README con el pedido y las
-fuentes.
+### [Doce estructuras de datos en una hoja](ejemplos/hoja-estructuras-de-datos/hoja-estructuras-de-datos.pdf)
+
+`/dossier 1 hoja impresion -texto items=12` · 1 página: una hoja de consulta para imprimir, con la tabla de costos, un mapa de cómo se relacionan las estructuras y un gráfico (a la derecha, un detalle ampliado).
+
+[![Doce estructuras de datos en una hoja](ejemplos/capturas/hoja-estructuras-de-datos.png)](ejemplos/hoja-estructuras-de-datos/hoja-estructuras-de-datos.pdf)
+
+### [Cómo funciona HTTPS: de la URL al candado](ejemplos/breve-https/breve-https.pdf)
+
+`/dossier breve lector=estudio` · 4 páginas: guía de estudio con mapa del tema, definición, ejemplo y confusión típica por concepto, preguntas de repaso y diagramas de secuencia.
+
+[![Cómo funciona HTTPS: de la URL al candado](ejemplos/capturas/breve-https.png)](ejemplos/breve-https/breve-https.pdf)
+
+### [Cómo guarda Git la historia por dentro](ejemplos/breve-git-por-dentro/breve-git-por-dentro.pdf)
+
+`/dossier breve lector=entrega impresion` · 5 páginas: informe para entregar, con portada formal, resumen ejecutivo, sesiones de terminal con su salida, diagramas y referencias.
+
+[![Cómo guarda Git la historia por dentro](ejemplos/capturas/breve-git-por-dentro.png)](ejemplos/breve-git-por-dentro/breve-git-por-dentro.pdf)
+
+### [A quién llamar, cuándo y cuántas veces](ejemplos/medio-campana-depositos/medio-campana-depositos.pdf)
+
+`/dossier medio lector=cliente +imagenes` · 7 páginas: informe para el área comercial de un banco ficticio, con la recomendación primero y 14 gráficos hechos con el dataset público Bank Marketing de UCI.
+
+[![A quién llamar, cuándo y cuántas veces](ejemplos/capturas/medio-campana-depositos.png)](ejemplos/medio-campana-depositos/medio-campana-depositos.pdf)
 
 ## Qué hay adentro
 
@@ -74,6 +106,5 @@ dossier/
 
 ## Actualizar
 
-```bash
-cd Dossier && git pull && rm -rf ~/.claude/skills/dossier && cp -R dossier ~/.claude/skills/
-```
+Con `npx skills update dossier` (o, si se instaló a mano, `git pull` en el clon y volver a
+copiar la carpeta `dossier/`).
