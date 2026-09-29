@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
 """Crea la carpeta de un documento de /dossier a partir de la plantilla de la skill.
 
-    python3 nuevo.py <carpeta> [--perfil "medio +imagenes -texto temas=6"]
+    python3 nuevo.py <nombre> [--raiz <proyecto>] [--perfil "medio +imagenes -texto temas=6"]
                      [--titulo "Título completo"] [--corto "Título corto"] [--autor "Autor"]
 
-Deja en <carpeta>: <nombre>.tex (nombre = el de la carpeta), dossier.sty,
-estilo_graficos.py, graficos.py (sin gráficos activos), README.md y las subcarpetas fig/
-y capturas/. En fig/ quedan las figuras de ejemplo que cita la plantilla, así la carpeta
-compila desde el primer momento; se reemplazan con las del documento.
+Todos los documentos van en dossiers/, en la raíz del proyecto: la del repositorio git, o
+la carpeta actual si no hay repositorio (--raiz elige otra; si la carpeta actual ya está
+dentro de un dossiers/, se usa ese). Cada uno en dossiers/<nombre>/, y los PDF compilados,
+juntos en dossiers/pdfs/: la primera vez, nuevo.py crea las dos. <nombre> también puede
+ser una ruta que termina en dossiers/<nombre>.
+
+Deja en dossiers/<nombre>/: <nombre>.tex, dossier.sty, estilo_graficos.py, graficos.py
+(sin gráficos activos), latexmkrc (latexmk a mano deja los auxiliares en _build/ y el PDF
+en ../pdfs/), README.md y las subcarpetas fig/ y capturas/. En fig/ quedan las figuras de
+ejemplo que cita la plantilla, así la carpeta compila desde el primer momento; se
+reemplazan con las del documento.
 
 --perfil lleva los mismos parámetros que /dossier (ver perfil.py). Con ellos elige la
 plantilla (una hoja, una hoja de consulta si es hoja con items=N, o un documento de
 varias páginas), el índice que conviene al largo y la opción de impresión, y deja
 escritos en el .tex y en el README el perfil con sus ajustes (temas=, items=, paginas=),
 el pedido tal como llegó y la línea exacta de medir.py. Nunca pisa un archivo que ya
-existe: si la carpeta ya tiene un documento, lo informa y sale con 1.
+existe, tampoco el PDF de dossiers/pdfs/: si ya hay un documento con ese nombre, lo
+informa y sale con 1.
 """
 from __future__ import annotations
 
@@ -32,6 +40,7 @@ AQUI = Path(__file__).resolve().parent
 PLANTILLA = AQUI.parent / "plantilla"
 sys.path.insert(0, str(AQUI))
 sys.dont_write_bytecode = True
+import _carpetas  # noqa: E402
 import _entorno  # noqa: E402
 from perfil import calcular, parsear  # noqa: E402
 
@@ -43,7 +52,9 @@ EJEMPLOS = {"fig/f1_ejemplo.pdf": "ejemplo", "fig/f2_categorias.pdf": "ejemplo_c
 def main() -> int:
     _entorno.usar()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("carpeta")
+    ap.add_argument("nombre", help="nombre del documento, o su ruta dentro de un dossiers/")
+    ap.add_argument("--raiz", help="carpeta del proyecto donde va dossiers/ (por defecto, la raíz "
+                    "del repositorio git o la carpeta actual)")
     ap.add_argument("--perfil", default="", help="parámetros de /dossier, entre comillas")
     ap.add_argument("--titulo", default="")
     ap.add_argument("--corto", default="")
@@ -70,9 +81,20 @@ def main() -> int:
         return 1
     perfil = calcular(parametros)
 
-    carpeta = Path(a.carpeta).expanduser().resolve()
-    nombre = re.sub(r"[^\w-]+", "-", carpeta.name).strip("-").lower() or "documento"
+    pedido_ruta = Path(a.nombre).expanduser()
+    if len(pedido_ruta.parts) > 1:  # una ruta: solo dentro de un dossiers/
+        dossiers = pedido_ruta.resolve().parent
+        if dossiers.name != _carpetas.DOSSIERS:
+            print(json.dumps({"ok": False, "error": "los documentos van en dossiers/<nombre>/: pasar solo el "
+                              "nombre, y --raiz con la carpeta del proyecto si no es la actual"},
+                             ensure_ascii=False))
+            return 1
+    else:
+        dossiers = _carpetas.carpeta_dossiers(a.raiz)
+    nombre = re.sub(r"[^\w-]+", "-", pedido_ruta.name).strip("-").lower() or "documento"
+    carpeta = dossiers / nombre
     tex = carpeta / f"{nombre}.tex"
+    pdf = _carpetas.pdf_de(tex)
     p = perfil["parametros"]
     if perfil["paginas"] == 1:  # con items=N, la hoja es de consulta: una fila por ítem
         modelo = "consulta.tex" if p["items"] else "hoja.tex"
@@ -83,14 +105,16 @@ def main() -> int:
         PLANTILLA / "dossier.sty": carpeta / "dossier.sty",
         PLANTILLA / "estilo_graficos.py": carpeta / "estilo_graficos.py",
         PLANTILLA / "graficos.py": carpeta / "graficos.py",
+        PLANTILLA / "latexmkrc": carpeta / "latexmkrc",
         PLANTILLA / "README.md": carpeta / "README.md",
     }
-    existentes = [str(d) for d in copias.values() if d.exists()]
+    existentes = [str(d) for d in (*copias.values(), pdf) if d.exists()]
     if existentes:
         print(json.dumps({"ok": False, "error": "ya existen", "archivos": existentes}, ensure_ascii=False))
         return 1
 
     carpeta.mkdir(parents=True, exist_ok=True)
+    pdf.parent.mkdir(exist_ok=True)
     (carpeta / "fig").mkdir(exist_ok=True)
     (carpeta / "capturas").mkdir(exist_ok=True)
     for origen, destino in copias.items():
@@ -147,7 +171,7 @@ def main() -> int:
         encoding="utf-8",
     )
     print(json.dumps({"ok": True, "carpeta": str(carpeta), "tex": str(tex), "plantilla": modelo,
-                      "pdf": str(tex.with_suffix(".pdf")), "perfil": resumen, "pedido": pedido,
+                      "pdf": str(pdf), "perfil": resumen, "pedido": pedido,
                       "paginas": perfil["paginas"], "medir": medir, "avisos": avisos + perfil["avisos"]},
                      ensure_ascii=False))
     return 0

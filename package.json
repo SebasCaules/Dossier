@@ -1,6 +1,6 @@
 {
   "name": "dossier-skill",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Skill /dossier para Claude Code: PDFs de lectura con LaTeX (resúmenes, informes, hojas de consulta). Instala la skill y lo que necesita.",
   "bin": {
     "dossier-skill": "bin/dossier.js"

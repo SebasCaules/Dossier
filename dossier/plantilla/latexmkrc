@@ -1,0 +1,5 @@
+# Para regenerar a mano desde esta carpeta con `latexmk`: compila con LuaLaTeX, deja los
+# auxiliares en _build/ y el PDF en ../pdfs/, junto a los de los demás documentos.
+$pdf_mode = 4;
+$aux_dir = '_build';
+$out_dir = '../pdfs';

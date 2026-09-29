@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Renderiza cada página del PDF para mirarla antes de entregar.
 
-    python3 revisar.py doc.pdf [--dpi 100] [--hoja-dpi 40] [--paginas 2,5-7]
-                              [--lector equipo|estudio|entrega|cliente]
+    python3 revisar.py dossiers/pdfs/doc.pdf [--dpi 100] [--hoja-dpi 40] [--paginas 2,5-7]
+                                            [--lector equipo|estudio|entrega|cliente]
 
-Escribe en _build/revision/ (junto al PDF):
+También acepta el .tex (revisa su PDF). Escribe en _build/revision/ de la carpeta del
+documento (para un PDF de dossiers/pdfs/, la de dossiers/<nombre>/; si no, la del PDF):
   - pagina-NN.png, una por página, a una resolución que se lee (para Read);
   - hoja.png, todas las páginas juntas, para ver de un vistazo el ritmo, los blancos
     grandes y las páginas que son pared de texto.
@@ -19,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.dont_write_bytecode = True
+import _carpetas  # noqa: E402
 import _entorno  # noqa: E402
 import _pdf  # noqa: E402
 
@@ -66,7 +68,7 @@ def total_paginas(pdf: Path) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("pdf")
+    ap.add_argument("pdf", help="el PDF o el .tex del documento")
     ap.add_argument("--dpi", type=int, default=100)
     ap.add_argument("--hoja-dpi", type=int, default=40)
     ap.add_argument("--paginas", default="", help="por ejemplo 2,5-7 (por defecto, todas)")
@@ -76,10 +78,14 @@ def main() -> int:
     _entorno.usar()
 
     pdf = Path(a.pdf).expanduser().resolve()
+    if pdf.suffix.lower() == ".tex":
+        carpeta, pdf = pdf.parent, _carpetas.pdf_de(pdf)
+    else:
+        carpeta = _carpetas.carpeta_de(pdf)
     if not pdf.exists():
         print(f"No existe {pdf}", file=sys.stderr)
         return 2
-    salida = pdf.parent / "_build" / "revision"
+    salida = carpeta / "_build" / "revision"
     salida.mkdir(parents=True, exist_ok=True)
     total = total_paginas(pdf)
     elegidas = rango(a.paginas, total)

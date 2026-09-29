@@ -319,14 +319,15 @@ def prueba() -> bool:
     py = _entorno.python_del_entorno()
     python = str(py) if py.exists() else sys.executable
     with tempfile.TemporaryDirectory() as tmp:
-        carpeta = Path(tmp) / "prueba"
-        r = correr([python, "-B", AQUI / "nuevo.py", carpeta, "--perfil", "1 hoja"], capture_output=True, text=True)
+        dossiers = Path(tmp) / "dossiers"
+        r = correr([python, "-B", AQUI / "nuevo.py", "prueba", "--raiz", tmp, "--perfil", "1 hoja"],
+                   capture_output=True, text=True)
         if r.returncode != 0:
             decir("nuevo.py falló:\n" + (r.stdout + r.stderr).strip()[-1500:])
             return False
-        r = correr([python, "-B", AQUI / "medir.py", carpeta / "prueba.tex", "--paginas", "1"],
+        r = correr([python, "-B", AQUI / "medir.py", dossiers / "prueba" / "prueba.tex", "--paginas", "1"],
                    capture_output=True, text=True)
-        if r.returncode != 0 or not (carpeta / "prueba.pdf").exists():
+        if r.returncode != 0 or not (dossiers / "pdfs" / "prueba.pdf").exists():
             decir("La hoja de prueba no compiló:\n" + (r.stdout + r.stderr).strip()[-2500:])
             return False
     decir(f"La hoja de prueba compiló y se midió en {round(time.time() - inicio)} s.")

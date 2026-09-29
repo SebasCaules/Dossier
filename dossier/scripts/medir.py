@@ -10,8 +10,9 @@ visuales y problemas de maquetación que se ven en el papel.
 
 Los números salen de perfil.py, que los calcula a partir de los parámetros del pedido.
 
-Compila con `latexmk -lualatex` (los auxiliares van a _build/ y el PDF queda junto al
-.tex) y después mide, con los \\input y \\include ya reemplazados por su contenido:
+Compila con `latexmk -lualatex` (los auxiliares van a _build/; el PDF, a dossiers/pdfs/ si
+el documento está en dossiers/<nombre>/, y si no, junto al .tex) y después mide, con los
+\\input y \\include ya reemplazados por su contenido:
 
   - páginas del PDF, contra --paginas; con menos de --paginas-min (el mínimo del largo),
     avisa;
@@ -54,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -62,6 +64,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.dont_write_bytecode = True
+import _carpetas  # noqa: E402
 import _entorno  # noqa: E402
 import _pdf  # noqa: E402
 
@@ -731,7 +734,7 @@ def main() -> int:
     ap.add_argument("--densa", type=int, default=550, help="palabras a partir de las que una página es pared de texto")
     ap.add_argument("--lector", choices=["equipo", "estudio", "entrega", "cliente"], help="lector del perfil")
     ap.add_argument("--sin-compilar", action="store_true", help="medir el PDF que ya existe")
-    ap.add_argument("--pdf", help="PDF a medir (por defecto, el del .tex)")
+    ap.add_argument("--pdf", help="PDF a medir (por defecto, el del .tex: dossiers/pdfs/<nombre>.pdf o a su lado)")
     ap.add_argument("--outdir", default="_build", help="carpeta de auxiliares, relativa al .tex")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
@@ -742,7 +745,7 @@ def main() -> int:
         print(f"No existe {tex}", file=sys.stderr)
         return 2
     outdir = Path(a.outdir) if Path(a.outdir).is_absolute() else tex.parent / a.outdir
-    pdf = Path(a.pdf).expanduser().resolve() if a.pdf else tex.with_suffix(".pdf")
+    pdf = Path(a.pdf).expanduser().resolve() if a.pdf else _carpetas.pdf_de(tex)
 
     if not a.sin_compilar:
         ok, salida = compilar(tex, outdir)
@@ -755,6 +758,7 @@ def main() -> int:
             return 2
         compilado = outdir / f"{tex.stem}.pdf"
         if a.pdf is None and a.outdir == "_build":
+            pdf.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(compilado, pdf)
         elif a.pdf is None:
             pdf = compilado
@@ -928,7 +932,7 @@ def main() -> int:
     else:
         lim_p = f" (límite {a.paginas})" if a.paginas is not None else ""
         lim_t = f"; tope {miles(tope)}" if tope is not None else ""
-        print(f"{pdf.name} · {paginas} {plural(paginas, 'página', 'páginas')}{lim_p} · texto ≈ "
+        print(f"{os.path.relpath(pdf, tex.parent)} · {paginas} {plural(paginas, 'página', 'páginas')}{lim_p} · texto ≈ "
               f"{coma(paginas_texto)} páginas ({miles(prosa)} {plural(prosa, 'palabra', 'palabras')} de prosa{lim_t})")
         print(f"Prosa: {miles(prosa)} = " + " · ".join(
             f"{b} {miles(v)}" for b, v in bloques.items() if v or b == "texto"))

@@ -1,6 +1,6 @@
 ---
 name: dossier
-version: "0.4.1"
+version: "0.5.0"
 description: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N. \u2028Arma PDFs de lectura (resúmenes, informes, documentos para un equipo o un cliente, guías de estudio) con gráficos, diagramas, capturas y navegación cliqueable, a la medida de esos parámetros, y los verifica midiendo el largo y mirando cada página. Usar siempre que el usuario pida un PDF para leer o compartir que resuma o explique algo («un PDF con lo que hicimos», «un resumen en PDF del parcial», «un documento mediano con más gráficos», «una hoja con lo esencial»), aunque no nombre la skill, y para acortar, alargar o rehacer un PDF así. No usar para manipular PDFs existentes (unir, dividir, extraer texto, formularios: skill pdf) ni para diapositivas."
 argument-hint: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N."
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill, AskUserQuestion
@@ -102,16 +102,20 @@ para completar y el reporte lo dice.
 ## 2. Crear la carpeta del documento
 
 ```bash
-python3 "SKILL_DIR/scripts/nuevo.py" "<proyecto>/<ruta>/<nombre>" --perfil "<parámetros> temas=N items=N" --titulo "<título>"
+python3 "SKILL_DIR/scripts/nuevo.py" <nombre> --perfil "<parámetros> temas=N items=N" --titulo "<título>"
 ```
 
-Va dentro del proyecto, junto al material del que habla; si no hay un lugar obvio,
-`<proyecto>/pdf/<nombre>/`. Elige la plantilla (`doc.tex` para varias páginas, `hoja.tex`
+Todos los documentos van en `dossiers/`, en la raíz del proyecto (la del repositorio git,
+o la carpeta actual si no hay repositorio; `--raiz <carpeta>` elige otra): cada uno en
+`dossiers/<nombre>/`, y los PDF, juntos en `dossiers/pdfs/`. La primera vez, `nuevo.py`
+crea las dos. `<nombre>` es corto y dice el tema (`informe-avance`, `guia-unidad-3`); si
+ya existe, elegir otro. Elige la plantilla (`doc.tex` para varias páginas, `hoja.tex`
 para una hoja y `consulta.tex` para una hoja con `items=N`), el índice y la opción de
 impresión. En la cabecera del `.tex` y en el `README.md` deja el perfil con sus ajustes,
 el pedido tal como llegó (`% Pedido: «…»`) y la línea de `medir.py`, que se puede correr
-tal cual. Copia `dossier.sty`, `estilo_graficos.py` y `graficos.py` (sin gráficos
-activos), así el PDF se puede regenerar aunque la skill cambie.
+tal cual. Copia `dossier.sty`, `estilo_graficos.py`, `graficos.py` (sin gráficos
+activos) y `latexmkrc` (con él, `latexmk` a mano también deja el PDF en `dossiers/pdfs/`),
+así el PDF se puede regenerar aunque la skill cambie.
 
 El contenido de la plantilla es de ejemplo: se reemplaza entero. Las figuras de ejemplo
 quedan en `fig/` (`nuevo.py` las dibuja una vez; `graficos.py` no las llama) y se
@@ -266,8 +270,9 @@ La línea exacta quedó en la cabecera del `.tex`:
 python3 "SKILL_DIR/scripts/medir.py" <doc>.tex --paginas N --paginas-min m --paginas-texto M --parte-texto F --densa D --visuales-min V [...] [--lector L]
 ```
 
-Compila con `latexmk -lualatex` (auxiliares en `_build/`, PDF junto al `.tex`), sigue
-los `\input` y tiene que salir con 0. La prosa incluye repaso, glosario y notas de
+Compila con `latexmk -lualatex` (auxiliares en `_build/`; el PDF va directo a
+`dossiers/pdfs/<nombre>.pdf` y reemplaza al anterior), sigue los `\input` y tiene que
+salir con 0. La prosa incluye repaso, glosario y notas de
 `\cifra`; el código, la matemática destacada y el texto de los dibujos no cuentan, y
 cada fórmula en línea o `\cod`, una palabra (en una celda de tabla, ninguna). Siempre
 imprime el desglose:
@@ -310,15 +315,16 @@ una pieza.
 ## 7. Mirar cada página
 
 ```bash
-python3 "SKILL_DIR/scripts/revisar.py" "<doc>.pdf" [--lector L]
+python3 "SKILL_DIR/scripts/revisar.py" "dossiers/pdfs/<nombre>.pdf" [--lector L]
 ```
 
-Leer `hoja.png` (todas juntas: ritmo, blancos, paredes de texto) y después cada
-`pagina-NN.png`; para lo fino, `--dpi 200 --paginas N`. El script imprime qué buscar, y
-con `--lector cliente` o `estudio`, también lo de ese lector. En cada figura, mirar que
-cada destacado esté explicado en el pie y que las cifras del pie coincidan con la
-figura. Corregir y volver al paso 6. No se entrega un PDF sin haber mirado todas sus
-páginas después de la última compilación.
+Las imágenes quedan en `_build/revision/` de la carpeta del documento. Leer `hoja.png`
+(todas juntas: ritmo, blancos, paredes de texto) y después cada `pagina-NN.png`; para lo
+fino, `--dpi 200 --paginas N`. El script imprime qué buscar, y con `--lector cliente` o
+`estudio`, también lo de ese lector. En cada figura, mirar que cada destacado esté
+explicado en el pie y que las cifras del pie coincidan con la figura. Corregir y volver al
+paso 6. No se entrega un PDF sin haber mirado todas sus páginas después de la última
+compilación.
 
 ## 8. Cotejar el contenido
 
@@ -340,7 +346,8 @@ de corregir, pasos 6 y 7.
 
 - Completar el `README.md` de la carpeta: para quién es, de dónde salen las cifras y qué
   quedó afuera de las fuentes.
-- Mostrar el PDF (con `SendUserFile` si está disponible; si no, la ruta).
+- Mostrar el PDF, `dossiers/pdfs/<nombre>.pdf` (con `SendUserFile` si está disponible;
+  si no, la ruta).
 - Reportar en no más de cinco líneas: ruta, perfil, páginas, texto y piezas visuales
   contra sus límites, qué es propuesta, qué quedó afuera y por qué, y qué dudas quedan
   (por ejemplo, los datos de entrega que faltan). Sin resumir el contenido.
@@ -351,7 +358,12 @@ de corregir, pasos 6 y 7.
 - **Cambiar el perfil** de un documento hecho («ahora mediano», «con más imágenes»):
   correr `perfil.py` con los parámetros nuevos, actualizar la cabecera del `.tex`
   (`% Perfil`, `% Pedido`, `% Medir`) y el `README.md`, y cambiar `\indice` o
-  `\indicelista` si cambió el largo. No hace falta crear otra carpeta.
+  `\indicelista` si cambió el largo. No hace falta crear otra carpeta: el PDF nuevo
+  reemplaza al de `dossiers/pdfs/`.
+- **Un documento de una versión anterior** (fuera de `dossiers/`): antes de regenerarlo,
+  moverlo a `dossiers/<nombre>/` (el nombre de su `.tex`; con `git mv` si el repositorio
+  lo sigue), llevar su PDF a `dossiers/pdfs/`, copiarle `SKILL_DIR/plantilla/latexmkrc` y
+  decirlo en el reporte. Fuera de `dossiers/`, el PDF sigue saliendo junto al `.tex`.
 - **«Más corto»:** bajar un largo o pasar a `-texto`; recortar texto antes que piezas
   visuales. Si el pedido cambia de dirección («más corto» y después «más largo»), no es
   el largo global: preguntar qué sección quedó corta.
