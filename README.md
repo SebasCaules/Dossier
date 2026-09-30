@@ -36,7 +36,7 @@ texto y las imágenes que se pidan. Antes de entregar, mide cada compilación y 
 <tr>
 <td width="33%" valign="top">
 
-:straight_ruler: **El largo es un número**
+**El largo es un número**
 
 `perfil.py` traduce el pedido a páginas, palabras y piezas visuales antes de escribir, y
 `medir.py` lo controla en cada compilación.
@@ -44,7 +44,7 @@ texto y las imágenes que se pidan. Antes de entregar, mide cada compilación y 
 </td>
 <td width="33%" valign="top">
 
-:eyes: **Mira cada página**
+**Mira cada página**
 
 `revisar.py` dibuja el PDF página por página: los cortes, las etiquetas superpuestas y
 los diagramas que desbordan solo existen ahí.
@@ -52,7 +52,7 @@ los diagramas que desbordan solo existen ahí.
 </td>
 <td width="33%" valign="top">
 
-:link: **Cada cifra con su fuente**
+**Cada cifra con su fuente**
 
 Las definiciones se copian de la fuente, cada número lleva `\fuente{…}` y un agente crítico
 coteja todo antes de entregar.
@@ -62,7 +62,7 @@ coteja todo antes de entregar.
 <tr>
 <td width="33%" valign="top">
 
-:bar_chart: **Gráficos con la letra del PDF**
+**Gráficos con la letra del PDF**
 
 `estilo_graficos.py` dibuja con la misma letra, el mismo tamaño y la misma paleta que el
 documento.
@@ -70,7 +70,7 @@ documento.
 </td>
 <td width="33%" valign="top">
 
-:compass: **Navegación con clics**
+**Navegación con clics**
 
 Índice cliqueable, marcadores, referencias cruzadas y un encabezado que vuelve al índice; en
 papel, las páginas y las direcciones al pie.
@@ -78,7 +78,7 @@ papel, las páginas y las direcciones al pie.
 </td>
 <td width="33%" valign="top">
 
-:package: **Un comando instala todo**
+**Un comando instala todo**
 
 La skill, LaTeX si falta, un entorno de Python y una hoja de prueba, sin permisos de
 administrador.
@@ -519,27 +519,27 @@ cambian la salida, pero cada uno dice qué hacer.
 <br>
 
 | Control | Cuándo salta | Qué es |
-|:--|:--|:-:|
-| Páginas del PDF | más que `--paginas` | :x: fuera de límite |
-| Palabras de prosa | más que el tope; dice qué bloque creció desde la medición anterior | :x: fuera de límite |
-| Piezas visuales | más que `--visuales-max` (con `-imagenes`) | :x: fuera de límite |
-| Imagen de texto | la foto de una página de otro documento, que además no cuenta como pieza | :x: problema |
-| Registro de LaTeX | texto que se sale del margen por más de 1 pt, un bloque más alto que la página, un carácter que la fuente no tiene, una referencia o un enlace roto, una fuente sustituida | :x: problema |
-| Páginas | menos que el mínimo del largo | :warning: aviso |
-| Parte de texto | la prosa ocupa en las páginas reales 8 puntos más que la del perfil | :warning: aviso |
-| Piezas visuales | menos que el mínimo | :warning: aviso |
-| Piso de `+texto` | menos prosa que el 40 % de las páginas | :warning: aviso |
-| Página densa | más de 400, 550 o 700 palabras en la letra del cuerpo, según el texto | :warning: aviso |
-| Blanco al pie | más del 40 % de una página que no es la última | :warning: aviso |
-| Hoja | usa menos del 85 % de la página | :warning: aviso |
-| Última página | usa menos del 35 % de su alto | :warning: aviso |
-| Hueco | más del 20 % de la altura en el medio de una página | :warning: aviso |
-| Final de página | termina en «:» y lo que anuncia quedó en la siguiente | :warning: aviso |
-| Diagramas | más de 60 palabras, o un nodo con más de 12 | :warning: aviso |
-| `~` antes de un número | en LaTeX es un espacio duro, no «aproximadamente» | :warning: aviso |
-| Referencias | una sigla que ningún `\fuente{…}` cita | :warning: aviso |
-| Repaso | con `--lector estudio`, una sección sin preguntas de repaso | :warning: aviso |
-| Blanco al pie | de 15 a 40 % de una página | :information_source: nota |
+|:--|:--|:--|
+| Páginas del PDF | más que `--paginas` | fuera de límite |
+| Palabras de prosa | más que el tope; dice qué bloque creció desde la medición anterior | fuera de límite |
+| Piezas visuales | más que `--visuales-max` (con `-imagenes`) | fuera de límite |
+| Imagen de texto | la foto de una página de otro documento, que además no cuenta como pieza | problema |
+| Registro de LaTeX | texto que se sale del margen por más de 1 pt, un bloque más alto que la página, un carácter que la fuente no tiene, una referencia o un enlace roto, una fuente sustituida | problema |
+| Páginas | menos que el mínimo del largo | aviso |
+| Parte de texto | la prosa ocupa en las páginas reales 8 puntos más que la del perfil | aviso |
+| Piezas visuales | menos que el mínimo | aviso |
+| Piso de `+texto` | menos prosa que el 40 % de las páginas | aviso |
+| Página densa | más de 400, 550 o 700 palabras en la letra del cuerpo, según el texto | aviso |
+| Blanco al pie | más del 40 % de una página que no es la última | aviso |
+| Hoja | usa menos del 85 % de la página | aviso |
+| Última página | usa menos del 35 % de su alto | aviso |
+| Hueco | más del 20 % de la altura en el medio de una página | aviso |
+| Final de página | termina en «:» y lo que anuncia quedó en la siguiente | aviso |
+| Diagramas | más de 60 palabras, o un nodo con más de 12 | aviso |
+| `~` antes de un número | en LaTeX es un espacio duro, no «aproximadamente» | aviso |
+| Referencias | una sigla que ningún `\fuente{…}` cita | aviso |
+| Repaso | con `--lector estudio`, una sección sin preguntas de repaso | aviso |
+| Blanco al pie | de 15 a 40 % de una página | nota |
 
 </details>
 
