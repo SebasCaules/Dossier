@@ -43,6 +43,10 @@ el documento está en dossiers/<nombre>/, y si no, junto al .tex) y después mid
   - aparte, las palabras dentro de dibujos TikZ (con las listas de \\foreach): no cuentan
     como texto, pero un diagrama con más de 60 palabras, o un nodo con más de 12, es texto
     con cajas;
+  - cuadros dentro de cuadros en los dibujos TikZ, que son un problema: \\grupo, \\fichas o
+    \\carril (de antes de la 0.6), un \\chip o un \\colorbox dentro de una caja, un recuadro
+    fit alrededor de otros nodos, cajas sobre un rectángulo con fondo o borde y una caja
+    encima de otra;
   - en la prosa, «~» antes de un número (en LaTeX es un espacio duro, no «aproximadamente»);
     con el entorno referencias, las siglas que ningún \\fuente cita; con --lector estudio,
     las secciones sin repaso.
@@ -85,7 +89,7 @@ DESCARTAR = {
     "figura": 1, "captura": 1, "input": 1, "include": 1, "thispagestyle": 1,
     "pagestyle": 1, "pdfbookmark": 2, "addcontentsline": 3, "newcommand": 2, "needspace": 1,
     "renewcommand": 2, "tikzset": 1, "usetikzlibrary": 1, "cite": 1, "footnotemark": 0,
-    "grupo": 1, "arriba": 2, "carril": 2,
+    "arriba": 2, "zona": 2, "divisoria": 1, "familia": 0,
     # código y tablas
     "lstinputlisting": 1, "lstset": 1, "lstdefinestyle": 2, "addlinespace": 0,
     "multicolumn": 2, "multirow": 2, "toprule": 0, "midrule": 0, "bottomrule": 0,
@@ -320,26 +324,44 @@ def desglose_prosa(tex: str) -> dict[str, int]:
     return cuenta
 
 
-def _textos_de_nodos(dibujo: str) -> list[tuple[int, str]]:
-    """El texto {..} de cada nodo de un dibujo TikZ, con su posición."""
-    textos = []
+def _coordenada(s: str) -> tuple[float, float] | None:
+    """(x, y) en cm si las dos son números sueltos; con calc, unidades o variables, None."""
+    m = re.fullmatch(r"\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*", s)
+    return (float(m.group(1)), float(m.group(2))) if m else None
+
+
+def _nodos(dibujo: str) -> list[dict]:
+    """Cada nodo de un dibujo TikZ: sus opciones [..], dónde va (at (x,y), solo si son
+    números) y su texto {..} con la posición del texto (None si no tiene)."""
+    nodos = []
     for m in re.finditer(r"\bnode\b", dibujo):
-        i = m.end()
+        i, opciones, at, tras_at = m.end(), [], None, False
         while True:  # saltar opciones [..], nombre (..) y «at (..)» hasta el texto {..}
             j = i
             while j < len(dibujo) and dibujo[j] in " \t\n":
                 j += 1
             if j < len(dibujo) and dibujo[j] in "[(":
                 i = _saltar_grupo(dibujo, j, dibujo[j], "]" if dibujo[j] == "[" else ")")
+                if dibujo[j] == "[":
+                    opciones.append(dibujo[j + 1:i - 1])
+                elif tras_at:
+                    at, tras_at = _coordenada(dibujo[j + 1:i - 1]), False
                 continue
             if dibujo.startswith("at", j) and not dibujo[j + 2:j + 3].isalpha():
-                i = j + 2
+                i, tras_at = j + 2, True
                 continue
             break
+        nodo = {"pos": j, "opciones": ",".join(opciones), "at": at, "texto": None}
         if j < len(dibujo) and dibujo[j] == "{":
             fin = _saltar_grupo(dibujo, j, "{", "}")
-            textos.append((j, dibujo[j + 1:fin - 1]))
-    return textos
+            nodo["texto"] = dibujo[j + 1:fin - 1]
+        nodos.append(nodo)
+    return nodos
+
+
+def _textos_de_nodos(dibujo: str) -> list[tuple[int, str]]:
+    """El texto {..} de cada nodo de un dibujo TikZ, con su posición."""
+    return [(n["pos"], n["texto"]) for n in _nodos(dibujo) if n["texto"] is not None]
 
 
 def _partir(lista: str, separador: str) -> list[str]:
@@ -419,10 +441,131 @@ def _listas_foreach(dibujo: str) -> list[dict]:
     return listas
 
 
+# Cuadros dentro de cuadros. Estilos de dossier.sty que dibujan una caja (fondo o borde;
+# relacion tiene fondo blanco, que sobre un relleno se ve como una ficha).
+ESTILOS_CAJA = {"caja", "cajag", "cajaa", "cajas", "cajao", "concepto", "concepto central",
+                "concepto marcado", "relacion", "grupo"}
+# Lo que dibuja una caja dentro del texto de un nodo.
+CAJA_EN_NODO = re.compile(r"\\(colorbox|fcolorbox|fbox|framebox|tcbox|chip|tikz)\b"
+                          r"|\\begin\{(tcolorbox|tikzpicture)\}")
+# Comandos de antes de la 0.6 que armaban cajas dentro de cajas.
+RETIRADOS = {"grupo": "fichas dentro de cajas (\\grupo)", "fichas": "fichas dentro de cajas (\\fichas)",
+             "ficha": "fichas dentro de cajas (\\ficha)", "fichadestacada": "fichas dentro de cajas (\\fichadestacada)",
+             "carril": "cajas sobre una franja de fondo (\\carril; ahora \\zona y \\divisoria)"}
+RECTANGULO = re.compile(r"\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*\)\s*rectangle\s*"
+                        r"\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*\)")
+EN_CM = {"cm": 1.0, "mm": 0.1, "pt": 0.03515, "em": 0.35, "": 0.03515}  # sin unidad, TikZ usa pt
+
+
+def _claves(opciones: str) -> list[tuple[str, bool, str]]:
+    """Las opciones de TikZ como (clave, tiene «=», valor): «draw=none,cajag» da
+    [('draw', True, 'none'), ('cajag', False, '')]."""
+    claves = []
+    for op in _partir(opciones, ","):
+        clave, igual, valor = op.partition("=")
+        if clave.strip():
+            claves.append((" ".join(clave.split()), bool(igual), valor.strip()))
+    return claves
+
+
+def _es_caja(opciones: str, estilos: set[str]) -> bool:
+    """Si unas opciones de TikZ dibujan una caja: draw o fill que no sean none, o un estilo
+    de caja sin valor."""
+    return any((clave in ("draw", "fill", "filldraw") and valor != "none") or (not igual and clave in estilos)
+               for clave, igual, valor in _claves(opciones))
+
+
+def _medida(opciones: str, clave: str) -> float | None:
+    """El valor en cm de «minimum width=6.8cm» y parecidos (None si no está o no es un número)."""
+    for k, _, valor in _claves(opciones):
+        if k == clave:
+            m = re.fullmatch(r"(-?\d*\.?\d+)\s*(cm|mm|pt|em)?", valor)
+            return float(m.group(1)) * EN_CM[m.group(2) or ""] if m else None
+    return None
+
+
+def _caja_del_nodo(nodo: dict) -> tuple[float, float, float, float] | None:
+    """El rectángulo (x1, y1, x2, y2) de un nodo con at numérico y alto y ancho mínimos."""
+    if nodo["at"] is None:
+        return None
+    lado = _medida(nodo["opciones"], "minimum size")
+    ancho = _medida(nodo["opciones"], "minimum width") or lado
+    alto = _medida(nodo["opciones"], "minimum height") or lado
+    if not (ancho and alto):
+        return None
+    x, y = nodo["at"]
+    ancla = next((v for k, _, v in _claves(nodo["opciones"]) if k == "anchor"), "center")
+    x1 = x if "west" in ancla else x - ancho if "east" in ancla else x - ancho / 2
+    y1 = y if "south" in ancla else y - alto if "north" in ancla else y - alto / 2
+    return (x1, y1, x1 + ancho, y1 + alto)
+
+
+def _dentro(punto: tuple[float, float], caja: tuple[float, float, float, float]) -> bool:
+    x, y = punto
+    return caja[0] - 0.01 <= x <= caja[2] + 0.01 and caja[1] - 0.01 <= y <= caja[3] + 0.01
+
+
+def cajas_anidadas(dibujo: str) -> list[tuple[int, str]]:
+    """Los cuadros dentro de cuadros de un dibujo TikZ, con la posición del primero de cada
+    tipo: comandos retirados (\\grupo, \\fichas, \\carril), una caja dentro del texto de un
+    nodo (\\chip, \\colorbox, \\tikz), un recuadro fit alrededor de otros nodos, cajas sobre
+    un rectángulo con fondo o borde, y una caja encima de otra con alto y ancho fijos. Las
+    posiciones con calc, variables o «right=of» no se pueden ubicar: para esas está mirar
+    la página (revisar.py)."""
+    hallados: dict[str, tuple[int, int]] = {}
+
+    def anotar(motivo: str, pos: int) -> None:
+        primera, veces = hallados.get(motivo, (pos, 0))
+        hallados[motivo] = (min(primera, pos), veces + 1)
+
+    for m in re.finditer(r"\\(%s)\b" % "|".join(RETIRADOS), dibujo):
+        anotar(RETIRADOS[m.group(1)], m.start())
+    # estilos locales que dibujan cajas: d/.style={concepto,...}, c/.style={d,fill=fondo}
+    estilos, locales = set(ESTILOS_CAJA), {}
+    for m in re.finditer(r"([A-Za-z][\w ]*?)\s*/\.style\s*=\s*\{", dibujo):
+        locales[m.group(1).strip()] = dibujo[m.end():_saltar_grupo(dibujo, m.end() - 1, "{", "}") - 1]
+    while True:
+        nuevos = {n for n, cuerpo in locales.items() if n not in estilos and _es_caja(cuerpo, estilos)}
+        if not nuevos:
+            break
+        estilos |= nuevos
+    cajas = [n for n in _nodos(dibujo) if _es_caja(n["opciones"], estilos)]
+    for n in cajas:
+        hallada = CAJA_EN_NODO.search(n["texto"] or "")
+        if hallada:
+            anotar(f"una caja dentro de un nodo (\\{hallada.group(1) or 'begin{' + hallada.group(2) + '}'})",
+                   n["pos"])
+        if any(k == "fit" for k, _, _ in _claves(n["opciones"])):
+            anotar("un recuadro (fit) alrededor de otros nodos", n["pos"])
+    # rectángulos con fondo o borde (\fill, \draw, \path[fill=..]) con cajas encima
+    for m in re.finditer(r"\\(fill|filldraw|draw|shade|shadedraw|path)\b", dibujo):
+        fin = _cuerpo_foreach(dibujo, m.end())
+        orden = dibujo[m.end():fin]
+        k = len(orden) - len(orden.lstrip())
+        opciones = orden[k + 1:_saltar_grupo(orden, k, "[", "]") - 1] if orden[k:k + 1] == "[" else ""
+        if m.group(1) == "path" and not _es_caja(opciones, set()):
+            continue
+        if "use as bounding box" in opciones:
+            continue
+        for r in RECTANGULO.finditer(orden):
+            x1, y1, x2, y2 = (float(v) for v in r.groups())
+            rect = (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+            if any(c["at"] and _dentro(c["at"], rect) for c in cajas):
+                anotar("cajas sobre un rectángulo con fondo o borde", m.start())
+    # una caja con alto y ancho fijos que tiene otra caja encima
+    for c in cajas:
+        rect = _caja_del_nodo(c)
+        if rect and any(o is not c and o["at"] and _dentro(o["at"], rect) for o in cajas):
+            anotar("una caja encima de otra", c["pos"])
+    return [(pos, motivo if veces == 1 else f"{motivo}, {veces} veces")
+            for motivo, (pos, veces) in sorted(hallados.items(), key=lambda x: x[1][0])]
+
+
 def diagramas(tex: str) -> list[dict]:
     """Por cada tikzpicture del cuerpo: dónde empieza, palabras en total (nodos y listas de
-    \\foreach), palabras de cada nodo que no es \\grupo ni \\fichas, y si es el mapa del
-    tema (3 o más \\hyperref)."""
+    \\foreach), palabras de cada nodo (y si es la caja de una familia, una lista con
+    \\familia), si es el mapa del tema (3 o más \\hyperref) y sus cuadros dentro de cuadros
+    (cajas_anidadas)."""
     tex = _sin_comentarios(tex)
     inicio = tex.find(r"\begin{document}")
     resultado = []
@@ -433,14 +576,15 @@ def diagramas(tex: str) -> list[dict]:
         nodos = []
         for pos, texto in _textos_de_nodos(dibujo):
             nodos.append({"pos": m.start(1) + pos, "palabras": palabras_prosa(texto),
-                          "contenedor": bool(re.search(r"\\(?:grupo|fichas)\b", texto)), "foreach": False})
+                          "familia": bool(re.search(r"\\familia\b", texto)), "foreach": False})
         enlaces = len(re.findall(r"\\hyper(?:ref|link)\b", dibujo))
         for lista in _listas_foreach(dibujo):
-            nodos += [{"pos": m.start(1) + lista["pos"], "palabras": w, "contenedor": False, "foreach": True}
+            nodos += [{"pos": m.start(1) + lista["pos"], "palabras": w, "familia": False, "foreach": True}
                       for w in lista["entradas"]]
             enlaces += lista["enlaces"] * max(0, lista["n"] - 1)
+        anidadas = [(m.start(1) + pos, motivo) for pos, motivo in cajas_anidadas(dibujo)]
         resultado.append({"pos": m.start(), "palabras": sum(n["palabras"] for n in nodos),
-                          "nodos": nodos, "mapa": enlaces >= 3})
+                          "nodos": nodos, "mapa": enlaces >= 3, "anidadas": anidadas})
     return resultado
 
 
@@ -893,11 +1037,18 @@ def main() -> int:
     cargados = [n + 1 for n, d in enumerate(dibujos) if d["palabras"] > 60 and not d["mapa"]]
     for n, d in enumerate(dibujos):
         for nodo in ([] if d["mapa"] else d["nodos"]):  # el mapa del tema es navegación
-            if nodo["palabras"] > 12 and not nodo["contenedor"]:
+            if nodo["palabras"] > 12 and not nodo["familia"]:
                 en = "en la lista de un \\foreach, " if nodo["foreach"] else ""
                 avisos.append(f"el diagrama {n + 1} tiene un nodo con {nodo['palabras']} palabras "
                               f"({en}{donde(nodo['pos'])}): texto en una caja. Dejar en el nodo "
                               "unas pocas palabras y pasar el resto al texto o al pie.")
+    for n, d in enumerate(dibujos):
+        for pos, motivo in d["anidadas"]:
+            problemas.append(f"cuadros dentro de cuadros en el diagrama {n + 1} ({donde(pos)}): {motivo}. "
+                             "Un diagrama lleva un solo nivel de cajas: los miembros de una familia, como "
+                             "texto en su caja (\\familia) o como hojas de un árbol; dos mundos, a cada lado "
+                             "de una \\divisoria. Rehacerlo como otro diagrama, no como tabla "
+                             "(referencias/diagramas.md)")
     for pos, trozo in tildes_de_aproximado(fuente_tex):
         avisos.append(f"«~» antes de un número ({donde(pos)}: «{trozo}»): en LaTeX es un espacio "
                       "duro y no se ve. Para «aproximadamente», escribir «unos», «cerca de» o \\textasciitilde.")

@@ -35,6 +35,8 @@ QUE_MIRAR = """Qué buscar en cada página:
   - ¿las cifras del pie coinciden con la figura?
   - ¿el pie de cada diagrama dice su mensaje, no solo cómo está dispuesto?
   - ¿algún diagrama es una lista en cajas?
+  - ¿alguna caja dentro de otra (fichas en un grupo, cajas sobre una franja o un recuadro
+    de fondo)?
   - ¿la última página tiene sentido sola?"""
 POR_LECTOR = {
     "cliente": ["¿cada término se entiende sin la fuente?",

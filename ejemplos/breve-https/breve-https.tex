@@ -267,14 +267,14 @@ Handshake y certificado determinan juntos lo que HTTPS protege: el servidor qued
 autenticado y los datos, cifrados e íntegros \fuente{RFC 8446, §1}. Lo que viaja fuera de TLS
 lo ve cualquiera en la red.
 
-\begin{bloque}[A la izquierda, lo que ve la red aunque se use HTTPS \fuente{RFC 9110, §4.3.3 · RFC 8446, §E.3}; a la derecha, lo que queda dentro de TLS \fuente{MDN-TLS}. En rosa, el nombre en el ClientHello: va en claro porque solo se cifra lo que sigue al ServerHello \fuente{RFC 8446, §1.2}.]
+\begin{bloque}[A la izquierda, lo que ve la red aunque se use HTTPS \fuente{RFC 9110, §4.3.3 · RFC 8446, §E.3}; a la derecha, lo que queda dentro de TLS \fuente{MDN-TLS}. En terracota, el nombre en el ClientHello: va en claro porque solo se cifra lo que sigue al ServerHello \fuente{RFC 8446, §1.2}.]
 \begin{tikzpicture}
-  \node[grupo] (red) at (0,0)
-    {\grupo[1.85cm]{8.1cm}{Lo ve la red}{IP y puerto, nombre en la consulta DNS, !nombre en el ClientHello, tamaño y ritmo del tráfico}};
-  \node[grupo] (tls) at (8.95,0)
-    {\grupo[1.85cm]{8.03cm}{Solo lo ven cliente y servidor}{ruta y consulta, encabezados, cookies, cuerpo de la petición, cuerpo de la respuesta}};
-  \draw[acento2,dashed,line width=0.9pt] (8.72,0.1) -- (8.72,-2.2);
-  \node[fill=white,inner sep=1.5pt,rotate=90,font=\scriptsize\bfseries,text=acento2] at (8.72,-1.05) {TLS};
+  \node[cajag,anchor=north west] (red) at (0,0)
+    {\arriba{1.1cm}{8.1cm}{\familia{Lo ve la red}{IP y puerto, nombre en la consulta DNS, {\color{acento2}\bfseries nombre en el ClientHello}, tamaño y ritmo del tráfico}}};
+  \node[cajag,anchor=north west] (tls) at (8.95,0)
+    {\arriba{1.1cm}{8.03cm}{\familia{Solo lo ven cliente y servidor}{ruta y consulta, encabezados, cookies, cuerpo de la petición, cuerpo de la respuesta}}};
+  \draw[acento2,dashed,line width=0.9pt] (8.72,0.1) -- (8.72,-1.65);
+  \node[fill=white,inner sep=1.5pt,rotate=90,font=\scriptsize\bfseries,text=acento2] at (8.72,-0.77) {TLS};
 \end{tikzpicture}
 \end{bloque}
 

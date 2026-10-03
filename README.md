@@ -505,6 +505,7 @@ mindmap
       fuentes sustituidas
     Contenido
       diagramas cargados
+      cuadros dentro de cuadros
       virgulilla
       siglas sin citar
       secciones sin repaso
@@ -524,6 +525,7 @@ cambian la salida, pero cada uno dice qué hacer.
 | Palabras de prosa | más que el tope; dice qué bloque creció desde la medición anterior | fuera de límite |
 | Piezas visuales | más que `--visuales-max` (con `-imagenes`) | fuera de límite |
 | Imagen de texto | la foto de una página de otro documento, que además no cuenta como pieza | problema |
+| Cuadros dentro de cuadros | un diagrama con una caja dentro de otra: fichas en un grupo, cajas sobre una franja o un recuadro de fondo, un `\chip` en una caja | problema |
 | Registro de LaTeX | texto que se sale del margen por más de 1 pt, un bloque más alto que la página, un carácter que la fuente no tiene, una referencia o un enlace roto, una fuente sustituida | problema |
 | Páginas | menos que el mínimo del largo | aviso |
 | Parte de texto | la prosa ocupa en las páginas reales 8 puntos más que la del perfil | aviso |
@@ -578,7 +580,7 @@ Después de medir y mirar, un agente coteja el contenido contra las fuentes. As�
 >
 > > Coteja contra `<fuentes>` cada cifra, fecha, definición, fórmula y regla (quién puede qué,
 > > hasta cuándo, con qué efecto) de `<doc>.tex`, incluidas la primera oración de cada sección
-> > y el texto de diagramas y fichas. […] Devuelve solo los desacuerdos, cada uno con la línea
+> > y el texto de los diagramas. […] Devuelve solo los desacuerdos, cada uno con la línea
 > > del .tex, lo que dice la fuente (ruta y línea) y la corrección. No edites nada.
 
 Cada hallazgo se revisa contra su evidencia antes de aplicarlo, y no hay segunda ronda: después
@@ -591,6 +593,8 @@ de corregir, se vuelve a medir y a mirar.
 `dossier.sty` trae las piezas; cada una tiene su ejemplo en
 [`referencias/componentes.md`](dossier/referencias/componentes.md), y los diagramas de
 relaciones, sus reglas en [`referencias/diagramas.md`](dossier/referencias/diagramas.md).
+Todos llevan un solo nivel de cajas: nada de fichas dentro de un grupo ni de cajas sobre
+una franja de fondo.
 
 | Para mostrar | Se usa |
 |:--|:--|
@@ -598,8 +602,8 @@ relaciones, sus reglas en [`referencias/diagramas.md`](dossier/referencias/diagr
 | fechas, hitos y dónde estamos | `\hitos` |
 | etapas en orden | `\proceso` |
 | cómo se conectan las partes | TikZ con los estilos `caja`, `flecha` y `etiqueta` |
-| qué pertenece a qué, dos mundos que no se mezclan, qué causa qué | grupos con fichas, carriles o mapa conceptual |
-| pasos con ramas | árbol de decisión |
+| qué pertenece a qué, dos mundos que no se mezclan, qué causa qué | una caja por familia con sus miembros como texto, zonas separadas por una línea o mapa conceptual |
+| pasos con ramas; qué familia es cada caso | árbol de decisión; árbol de clasificación |
 | cantidades que se comparan | un gráfico de `graficos.py` |
 | una función o un área de probabilidad | `densidad`, `sombrear` y `corte` |
 | tramos: plazos, escalas, tarifas | `escalones` |
@@ -851,6 +855,8 @@ timeline
           : Poppler deja de ser obligatorio
     0.5 : todos los documentos en dossiers/
         : los PDF, juntos en dossiers/pdfs/
+    0.6 : un solo nivel de cajas en los diagramas
+        : medir.py marca los cuadros dentro de cuadros
 ```
 
 </details>

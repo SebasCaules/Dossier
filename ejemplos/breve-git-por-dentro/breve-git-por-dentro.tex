@@ -213,16 +213,17 @@ en estado \emph{detached HEAD} \fuente{PG §10.3}.
 
 \begin{bloque}[Arriba, archivos que se reescriben con cada commit o rama nueva; abajo, objetos que no cambian. En azul, \cod{HEAD}, que nombra una rama \fuente{PG §10.3 · R}.]
 \begin{tikzpicture}
-  \carril{0}{1.3}{REFERENCIAS}
-  \carril{-1.6}{1.3}{OBJETOS}
+  \zona{0}{1.3}{REFERENCIAS}
+  \divisoria{-0.25}
+  \zona{-1.6}{1.3}{OBJETOS}
   \node[cajaa,inner sep=6pt,font=\footnotesize,text width=3.1cm] (h) at (2.6,0.65) {\textbf{HEAD}\\{\ttfamily ref: refs/heads/main}};
-  \node[cajag,fill=white,text width=2.9cm] (m) at (8.0,0.65) {\textbf{refs/heads/main}\\41 bytes};
-  \node[cajag,fill=white,text width=2.9cm] (s) at (14.6,0.65) {\textbf{refs/heads/sopa}\\41 bytes};
-  \node[cajag,fill=white,text width=2.6cm] (k1) at (4.6,-0.95) {\textbf{commit c32cb21}};
-  \node[cajag,fill=white,text width=2.6cm] (k2) at (11.3,-0.95) {\textbf{commit e5086a9}};
+  \node[cajag,text width=2.9cm] (m) at (8.0,0.65) {\textbf{refs/heads/main}\\41 bytes};
+  \node[cajag,text width=2.9cm] (s) at (14.6,0.65) {\textbf{refs/heads/sopa}\\41 bytes};
+  \node[cajag,text width=2.6cm] (k1) at (4.6,-0.95) {\textbf{commit c32cb21}};
+  \node[cajag,text width=2.6cm] (k2) at (11.3,-0.95) {\textbf{commit e5086a9}};
   \draw[rel] (h) -- node[relacion,above] {nombre} (m);
-  \draw[rel] (m.south) -- node[relacion,pos=0.45] {hash} (k2.north west);
-  \draw[rel] (s.south) -- node[relacion,pos=0.45] {hash} (k2.north east);
+  \draw[rel] (m.south) -- node[relacion,pos=0.2] {hash} (k2.north west);
+  \draw[rel] (s.south) -- node[relacion,pos=0.2] {hash} (k2.north east);
   \draw[rel] (k2) -- node[relacion,above] {padre} (k1);
 \end{tikzpicture}
 \end{bloque}
@@ -275,9 +276,10 @@ Merge branch 'sopa'
 \end{bloque}
 
 \begin{bloque}[Arriba, \cod{main} salta de \cod{e5086a9} a \cod{e32d0b4} sin objetos nuevos. Abajo, el commit de merge, en azul, tiene dos padres, y el ancestro común es el mismo \cod{e5086a9}. Las flechas van de cada commit a su padre \fuente{R}.]
-\begin{tikzpicture}[k/.style={cajag,fill=white,una linea,font=\footnotesize\ttfamily}]
-  \carril{0}{1.5}{AVANCE RÁPIDO}
-  \carril{-3.3}{2.9}{TRES VÍAS}
+\begin{tikzpicture}[k/.style={cajag,una linea,font=\footnotesize\ttfamily}]
+  \zona{0}{1.5}{AVANCE RÁPIDO}
+  \divisoria{-0.35}
+  \zona{-3.3}{2.9}{TRES VÍAS}
   % avance rápido
   \node[k] (a1) at (2.6,0.55) {e5086a9};
   \node[k] (a2) at (6.4,0.55) {e32d0b4};

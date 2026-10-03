@@ -1,6 +1,6 @@
 ---
 name: dossier
-version: "0.5.0"
+version: "0.6.0"
 description: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N. \u2028Arma PDFs de lectura (resúmenes, informes, documentos para un equipo o un cliente, guías de estudio) con gráficos, diagramas, capturas y navegación cliqueable, a la medida de esos parámetros, y los verifica midiendo el largo y mirando cada página. Usar siempre que el usuario pida un PDF para leer o compartir que resuma o explique algo («un PDF con lo que hicimos», «un resumen en PDF del parcial», «un documento mediano con más gráficos», «una hoja con lo esencial»), aunque no nombre la skill, y para acortar, alargar o rehacer un PDF así. No usar para manipular PDFs existentes (unir, dividir, extraer texto, formularios: skill pdf) ni para diapositivas."
 argument-hint: "Parámetros → Largo: 1 hoja, breve (default), medio o largo — Texto: +texto o -texto — Imágenes: +imagenes o -imagenes — Lector: equipo, estudio, entrega o cliente — Formato: impresion | digital — Ajustes: temas=N, items=N, paginas=N."
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill, AskUserQuestion
@@ -220,8 +220,8 @@ el hueco que deja es chico: `medir.py` avisa desde el 20 % de la página.
 | fechas, hitos, dónde estamos | `\hitos` |
 | etapas en orden (las de un método, sin avance: estado `neutro`) | `\proceso` |
 | cómo se conectan las partes | TikZ con los estilos `caja`, `flecha` y `etiqueta` |
-| qué pertenece a qué, dos mundos que no se mezclan, qué causa qué | grupos con fichas, carriles o mapa conceptual: `referencias/diagramas.md` |
-| pasos con ramas | árbol de decisión (`referencias/componentes.md`) |
+| qué pertenece a qué, dos mundos que no se mezclan, qué causa qué | familias (una caja cada una, con sus miembros como texto), zonas separadas por una línea o mapa conceptual: `referencias/diagramas.md` |
+| pasos con ramas; qué familia es cada caso | árbol de decisión; árbol de clasificación (`referencias/componentes.md`) |
 | cantidades que se comparan | gráfico con `graficos.py` |
 | una función o un área de probabilidad | `densidad` + `sombrear` (y `corte`), con los parámetros de un ejemplo de la fuente: «Gráficos de funciones» |
 | tramos (plazos, escalas, tarifas) | `escalones` |
@@ -233,7 +233,9 @@ el hueco que deja es chico: `medir.py` avisa desde el 20 % de la página.
 
 Cada componente tiene su ejemplo en `referencias/componentes.md`. Leerlo antes de armar
 la primera página, y `referencias/diagramas.md` antes del primer diagrama de relaciones:
-un diagrama tiene que mostrar la relación que afirma el texto, no una lista en cajas.
+un diagrama tiene que mostrar la relación que afirma el texto, no una lista en cajas, y
+lleva **un solo nivel de cajas**: nunca fichas dentro de un grupo, cajas sobre una franja
+o un recuadro de fondo, ni una caja dentro de otra (`medir.py` lo marca como problema).
 
 **Gráficos.** Si la skill `dataviz` está instalada, cargarla antes del primero: de ella
 aplican la forma, el color por función, las marcas, la leyenda y mirar el resultado; el
@@ -291,6 +293,10 @@ Si no sale con 0:
   que dice el texto. Las tablas, las filas de cifras y el mapa del tema (un dibujo con 3
   o más `\hyperref`, que sale aparte: «mapa del tema: 1») no cuentan.
 - **Imagen de texto:** una página de otro documento pegada como figura. Quitarla.
+- **Cuadros dentro de cuadros:** un diagrama con cajas adentro de otra caja. Rehacerlo con
+  un solo nivel de cajas: los miembros de una familia como texto en su caja (`\familia`)
+  o como hojas de un árbol de clasificación, y dos mundos a cada lado de una
+  `\divisoria` (`referencias/diagramas.md`). Otro diagrama, nunca una tabla.
 - **Texto que se sale del margen, carácter que la fuente no tiene, referencia rota:** ver
   `referencias/problemas.md`.
 
@@ -333,7 +339,7 @@ afirmaciones, que se cotejan a mano:
 
 > Coteja contra `<fuentes>` cada cifra, fecha, definición, fórmula y regla (quién puede
 > qué, hasta cuándo, con qué efecto) de `<doc>.tex`, incluidas la primera oración de cada
-> sección y el texto de diagramas y fichas. Busca también las contradicciones internas y
+> sección y el texto de los diagramas. Busca también las contradicciones internas y
 > entre fuentes, y lo que la fuente le pide al lector y el documento omite. Si el
 > documento describe código, cotéjalo contra el código, no contra su README; una tabla de
 > fórmulas, celda por celda. Devuelve solo los desacuerdos, cada uno con la línea del
@@ -363,12 +369,20 @@ de corregir, pasos 6 y 7.
 - **Un documento de una versión anterior** (fuera de `dossiers/`): antes de regenerarlo,
   moverlo a `dossiers/<nombre>/` (el nombre de su `.tex`; con `git mv` si el repositorio
   lo sigue), llevar su PDF a `dossiers/pdfs/`, copiarle `SKILL_DIR/plantilla/latexmkrc` y
-  decirlo en el reporte. Fuera de `dossiers/`, el PDF sigue saliendo junto al `.tex`.
+  decirlo en el reporte. Fuera de `dossiers/`, el PDF sigue saliendo junto al `.tex`. Si
+  `medir.py` marca cuadros dentro de cuadros (grupos con fichas o carriles, de antes de
+  la 0.6), copiarle también `SKILL_DIR/plantilla/dossier.sty`, que trae `\familia`,
+  `\zona` y `\divisoria`, y rehacer esos diagramas.
 - **«Más corto»:** bajar un largo o pasar a `-texto`; recortar texto antes que piezas
   visuales. Si el pedido cambia de dirección («más corto» y después «más largo»), no es
   el largo global: preguntar qué sección quedó corta.
 - **Queja visual ambigua** («tamaño», «largo»): preguntar cuál de las dos cosas o
   corregir ambas en la misma vuelta.
+- **«No me gusta este diagrama»:** reemplazarlo por otro diagrama, más simple, no por
+  una tabla: un mapa de ejercicios cambiado por una tabla volvió como «quiero un
+  diagrama». En la misma vuelta, revisar los demás diagramas del documento, y los de los
+  otros documentos del mismo pedido, buscando el mismo problema y no solo el mismo
+  comando: buscar solo `\grupo` dejó tres mapas sin corregir.
 
 ## Problemas conocidos
 

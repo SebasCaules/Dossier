@@ -107,9 +107,6 @@ Cada uno ya costó tiempo en algún proyecto. Síntoma, causa y arreglo.
   vertical: la caja con un renglón menos deja su título más abajo. Usar
   `\arriba{alto}{ancho}{…}` con el mismo alto en todas (`componentes.md`, «Diagrama de
   cajas y flechas»).
-- **El título de un `\grupo` se sale del margen.** No se parte en dos renglones: a
-  `\footnotesize` en negrita entran unas 19 letras en 2,85 cm, y «Distribución y
-  franquicia» (3,15 cm) se salió 8,7 pt. Acortarlo o ensanchar el grupo.
 - **Los colores del gráfico no pasan el validador de dataviz.** Los de `dossier.sty` son
   para el documento. Para distinguir categorías, `SERIES` de `estilo_graficos.py`.
 - **Todo el gráfico sale en negrita.** matplotlib lee solo la primera cara de
@@ -119,9 +116,15 @@ Cada uno ya costó tiempo en algún proyecto. Síntoma, causa y arreglo.
 - **La foto de una página de texto como figura.** Pasó en un resumen: la página 1 del
   enunciado, pegada para sumar imágenes. `medir.py` la marca (proporción de
   hoja y renglones) y la descuenta; se quita y lo que decía se resume con palabras propias.
-- **Las fichas de un grupo se salen de la caja.** Con `\grupo[alto]` o `\arriba`, si el
-  contenido no entra, la caja crece y el log avisa; `medir.py` lo muestra como problema.
-  Subir el alto de toda la fila, para que los títulos sigan alineados.
+- **El contenido de una caja con `\arriba` no entra.** La caja crece y el log avisa;
+  `medir.py` lo muestra como problema. Subir el alto de toda la fila, para que los títulos
+  sigan alineados.
+- **«Cuadros dentro de cuadros» en `medir.py`.** Un diagrama con una caja dentro de otra:
+  `\grupo`, `\fichas` o `\carril` (de antes de la 0.6; el `dossier.sty` de la 0.6 ya no los trae),
+  un `\chip` o un `\colorbox` en una caja, un recuadro `fit` alrededor de otros nodos,
+  cajas sobre un rectángulo con fondo o borde, una caja encima de otra. Rehacerlo con un
+  solo nivel de cajas (`diagramas.md`, regla 2): familias con `\familia`, un árbol de
+  clasificación o zonas con `\divisoria`. No reemplazarlo por una tabla.
 - **«Missing \endcsname» o «No shape named» en un diagrama.** En `\foreach`, las
   opciones como `[count=\n]` van antes de `in`; las variables no pueden llamarse `\c`,
   `\i`, `\l`, `\o` ni `\p` (son comandos de LaTeX), y los nombres de nodo no llevan

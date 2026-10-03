@@ -208,16 +208,17 @@ Las reglas usan solo datos que el banco tiene antes de llamar. La duración de l
 queda afuera: se conoce recién al cortar, y la descripción del dataset pide dejarla fuera
 de cualquier predicción realista \fuente{BM}.
 
-\begin{bloque}[A la izquierda de la línea, lo que se sabe antes de llamar. Lo destacado en rosa se sabe al terminar y no se usa para ordenar la lista. El número junto a cada tipo dice cuántos datos tiene \fuente{BM}.]
+\begin{bloque}[A la izquierda de la línea, lo que se sabe antes de llamar. Lo de la caja en rosa se sabe al terminar y no se usa para ordenar la lista. El número junto a cada tipo dice cuántos datos tiene \fuente{BM}.]
 \begin{tikzpicture}
-  \node[grupo] (a) at (0,0)      {\grupo[2.5cm]{3.3cm}{Cliente · 7}{edad, ocupación, estado civil, estudios, mora, hipoteca, préstamo}};
-  \node[grupo] (b) at (4.095,0)  {\grupo[2.5cm]{1.7cm}{Contacto · 1}{teléfono}};
-  \node[grupo] (c) at (6.59,0)   {\grupo[2.5cm]{4.1cm}{Historia · 3}{días desde el último, contactos previos, resultado anterior}};
-  \node[grupo] (e) at (11.485,0) {\grupo[2.5cm]{3.0cm}{Contexto · 5}{euríbor, empleo, precios, confianza, empleados}};
-  \node[grupo] (f) at (15.28,0)  {\grupo[2.5cm]{1.7cm}{Al final · 4}{!duración, !intentos, !mes, !día}};
-  \draw[acento2,dashed,line width=0.9pt] (15.09,0.3) -- (15.09,-3.3);
+  \node[cajag,anchor=north west] (a) at (0,0)      {\arriba{1.5cm}{3.3cm}{\familia[7]{Cliente}{edad, ocupación, estado civil, estudios, mora, hipoteca, préstamo}}};
+  \node[cajag,anchor=north west] (b) at (4.095,0)  {\arriba{1.5cm}{1.7cm}{\familia[1]{Contacto}{teléfono}}};
+  \node[cajag,anchor=north west] (c) at (6.59,0)   {\arriba{1.5cm}{4.1cm}{\familia[3]{Historia}{días desde el último, contactos previos, resultado anterior}}};
+  \node[cajag,anchor=north west] (e) at (11.485,0) {\arriba{1.5cm}{3.0cm}{\familia[5]{Contexto}{euríbor, empleo, precios, confianza, empleados}}};
+  \node[cajag,fill=suave2,draw=acento2,line width=0.8pt,anchor=north west] (f) at (15.28,0)
+    {\arriba{1.5cm}{1.7cm}{\familia[4]{Al final}{duración, intentos, mes, día}}};
+  \draw[acento2,dashed,line width=0.9pt] (15.09,0.3) -- (15.09,-2.2);
   \node[font=\scriptsize\bfseries,text=acento2,anchor=south east] at (15.0,0.02) {momento de llamar};
-  \coordinate (bus) at (0,-3.4);
+  \coordinate (bus) at (0,-2.25);
   \foreach \g in {a,b,c,e,f} \draw[bus] (\g.south) -- (\g.south |- bus);
   \draw[bus] (a.south |- bus) -- (f.south |- bus);
   \coordinate (medio) at ($(a.south |- bus)!0.5!(f.south |- bus)$);
@@ -254,12 +255,13 @@ otra mitad, como siempre \chip{propuesta}.
 \begin{bloque}[Esquema de la prueba que se propone. Las dos mitades salen del mismo sorteo y no se mezclan hasta comparar depósitos cada 100 llamadas.]
 \begin{tikzpicture}
   \path (0,0) (17.4,0);
-  \carril{0}{1.5}{PRUEBA}
-  \carril{-1.75}{1.5}{CONTROL}
-  \node[cajag,fill=white,text width=2.4cm] (lista) at (2.2,-0.125) {\textbf{Lista}\\sorteo en dos mitades};
-  \node[cajag,fill=white,text width=2.9cm] (orden) at (6.4,0.75) {\textbf{Grupos A a D}\\celular primero};
-  \node[cajag,fill=white,text width=2.9cm] (tope) at (10.3,0.75) {\textbf{3 intentos, salvo A}\\sin lunes};
-  \node[cajag,fill=white,text width=6.8cm] (igual) at (8.35,-1.0) {\textbf{Como en campañas anteriores}};
+  \zona{0}{1.5}{PRUEBA}
+  \zona{-1.75}{1.5}{CONTROL}
+  \draw[divisoria] (4.2,-0.125) -- (13.6,-0.125);
+  \node[cajag,text width=2.4cm] (lista) at (2.2,-0.125) {\textbf{Lista}\\sorteo en dos mitades};
+  \node[cajag,text width=2.9cm] (orden) at (6.4,0.75) {\textbf{Grupos A a D}\\celular primero};
+  \node[cajag,text width=2.9cm] (tope) at (10.3,0.75) {\textbf{3 intentos, salvo A}\\sin lunes};
+  \node[cajag,text width=6.8cm] (igual) at (8.35,-1.0) {\textbf{Como en campañas anteriores}};
   \node[cajaa,text width=2.6cm] (comp) at (15.4,-0.125) {\textbf{Comparar}\\depósitos cada 100 llamadas};
   \draw[rel] (lista.east) -- ++(0.3,0) |- (orden.west);
   \draw[rel] (lista.east) -- ++(0.3,0) |- (igual.west);

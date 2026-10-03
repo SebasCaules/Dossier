@@ -32,7 +32,7 @@ nombre que cumple su rol:
 | `rotulo`, `apagado` | texto secundario (rótulos, pies, fuentes) | texto chico | `#3D4D66`, 8,6:1; `#5F6779`, 5,7:1 |
 | `acento` | color primario: títulos, enlaces, lo destacado | texto y relleno | `#22456F`, 9,8:1 |
 | `acento2` | segundo color: números de sección, `\ojo`, «hoy» | texto chico | `#B8433A`, 5,4:1 |
-| `suave`, `suave2` | versiones claras (en curso, avisos, fichas) | relleno | |
+| `suave`, `suave2` | versiones claras (en curso, avisos, el destacado de un diagrama) | relleno | |
 | `fondo` | superficie de cajas, cifras y paneles | relleno | |
 | `linea` | bordes, filetes y lo pendiente | trazo | |
 
@@ -301,21 +301,24 @@ milímetros más angosto, se ve corrido del margen; para alinearlo, agregar dent
 ## Diagramas de relaciones
 
 Cuándo usar cada uno y las reglas: `diagramas.md`. Los tres primeros ejemplos son de un
-modelo que predice si un envío llega tarde; el árbol y la matriz, de un resumen de derecho.
+modelo que predice si un envío llega tarde; el árbol de decisión y la matriz, de un
+resumen de derecho, y el árbol de clasificación, de una guía de ejercicios de estadística.
+En todos, un solo nivel de cajas: ninguna caja va dentro de otra.
 
-### Grupos con fichas, una línea que separa y un bus (muchos a uno)
+### Familias, una línea que separa y un bus (muchos a uno)
 
 ```latex
-\begin{bloque}[A la izquierda de la línea, lo que se sabe antes de despachar; \texttt{km\_reales} se sabe después.]
+\begin{bloque}[A la izquierda de la línea, lo que se sabe antes de despachar; \texttt{km\_reales}, con borde terracota, se sabe después.]
 \begin{tikzpicture}
-  \node[grupo] (a) at (0,0)     {\grupo[3.2cm]{3.1cm}{Pedido · 7}{monto, peso, bultos, rubro, pago, canal, cuotas}};
-  \node[grupo] (c) at (3.65,0)  {\grupo[3.2cm]{2.6cm}{Cliente · 4}{zona, antigüedad, pedidos, reclamos}};
-  \node[grupo] (d) at (6.8,0)   {\grupo[3.2cm]{3.2cm}{Clima y calendario · 5}{lluvia\_mm, temperatura, feriado, día\_semana, hora\_pico}};
-  \node[grupo] (b) at (10.55,0) {\grupo[3.2cm]{2.75cm}{Depósito · 3}{depósito, turno, stock\_libre}};
-  \node[grupo] (e) at (14.45,0) {\grupo[3.2cm]{2.3cm}{El viaje · 1}{!km\_reales}};
-  \draw[acento2,dashed,line width=0.9pt] (14.1,0.3) -- (14.1,-3.85);
+  \node[cajag,anchor=north west] (a) at (0,0)     {\arriba{1.45cm}{3.1cm}{\familia[7]{Pedido}{monto, peso, bultos, rubro, pago, canal, cuotas}}};
+  \node[cajag,anchor=north west] (c) at (3.65,0)  {\arriba{1.45cm}{2.6cm}{\familia[4]{Cliente}{zona, antigüedad, pedidos, reclamos}}};
+  \node[cajag,anchor=north west] (d) at (6.8,0)   {\arriba{1.45cm}{3.2cm}{\familia[5]{Clima y calendario}{lluvia\_mm, temperatura, feriado, día\_semana, hora\_pico}}};
+  \node[cajag,anchor=north west] (b) at (10.55,0) {\arriba{1.45cm}{2.75cm}{\familia[3]{Depósito}{depósito, turno, stock\_libre}}};
+  \node[cajag,fill=suave2,draw=acento2,line width=0.8pt,anchor=north west] (e) at (14.45,0)
+    {\arriba{1.45cm}{2.3cm}{\familia[1]{El viaje}{km\_reales}}};
+  \draw[acento2,dashed,line width=0.9pt] (14.1,0.3) -- (14.1,-2.2);
   \node[font=\scriptsize\bfseries,text=acento2,anchor=south east] at (14.0,0.02) {momento de predecir};
-  \coordinate (bus) at (0,-3.95);
+  \coordinate (bus) at (0,-2.2);
   \foreach \g in {a,c,d,b,e} \draw[bus] (\g.south) -- (\g.south |- bus);
   \draw[bus] (a.south |- bus) -- (e.south |- bus);
   \coordinate (medio) at ($(a.south |- bus)!0.5!(e.south |- bus)$);
@@ -325,40 +328,46 @@ modelo que predice si un envío llega tarde; el árbol y la matriz, de un resume
 \end{bloque}
 ```
 
-- `\grupo[alto]{ancho}{título}{fichas}`: las fichas van separadas por comas; con `!`
-  delante, destacada (`!km\_reales`). Con el mismo `alto`, los títulos quedan alineados; si
-  un grupo no entra, crece y `medir.py` dice cuánto mide («mide 3.17cm»): subir el alto
-  de toda la fila a ese valor. Sin `alto`, cada uno toma el suyo.
-- El título no se parte: a `\footnotesize` en negrita, cada letra ocupa ~0,15 cm, así
-  que en un grupo de 2,85 cm entran unas 19. «Distribución y franquicia» mide 3,15 cm y
-  se sale del margen: acortarlo o ensanchar el grupo.
-- Los anchos de los grupos más las separaciones suman el ancho del texto (17,4 cm).
-- `\ficha{x}` y `\fichas{x, y}` también sirven sueltas dentro de un nodo o de un párrafo.
+- Una caja por familia, y sus miembros como texto: `\familia[a la derecha]{título}{abajo}`
+  pone el título en negrita, la cantidad (o los casos) a la derecha en gris y los
+  miembros abajo, separados por comas. Nunca fichas ni cajas adentro (`diagramas.md`,
+  regla 2).
+- Todas con `\arriba` y el mismo alto: los títulos quedan alineados y el bus sale de la
+  misma altura. Si una no entra, crece y `medir.py` dice cuánto mide («mide 1.62cm»):
+  subir el alto de toda la fila a ese valor.
+- La familia que lleva el mensaje va con borde (`draw=acento2`), no con otro relleno: es
+  el único destacado.
+- Los anchos de las cajas, más 0,42 cm cada una, y las separaciones suman el ancho del
+  texto (17,4 cm).
 
-### Carriles (dos mundos que no se mezclan)
+### Zonas (dos mundos que no se mezclan)
 
 ```latex
 \begin{bloque}[El test se aparta primero y no vuelve a tocarse hasta el final.]
 \begin{tikzpicture}[node distance=5mm]
-  \carril{0}{1.9}{ENTRENAMIENTO}
-  \carril{-1.75}{1.45}{TEST}
-  \node[cajag,fill=white,text width=2.3cm] (csv) at (1.95,0.1) {\textbf{CSV}\\21.748 filas};
-  \node[cajag,fill=white,text width=2.5cm,right=of csv,yshift=0.85cm] (kf) {\textbf{k-fold}\\pipeline ajustado en cada pliegue};
-  \node[cajag,fill=white,text width=2.6cm,right=of kf] (cv) {\textbf{Curvas de validación}\\tres modelos};
-  \node[cajag,fill=white,text width=2.6cm,right=of cv] (mf) {\textbf{Modelo final}\\con todo el train};
-  \node[cajag,fill=white,text width=2.3cm] (te) at (6.0,-1.0) {\textbf{Test apartado}\\20\%, estratificado};
+  \zona{0}{1.9}{ENTRENAMIENTO}
+  \divisoria{-0.15}
+  \zona{-1.75}{1.45}{TEST}
+  \node[cajag,text width=2.3cm] (csv) at (1.95,0.95) {\textbf{CSV}\\21.748 filas};
+  \node[cajag,text width=2.5cm,right=of csv] (kf) {\textbf{k-fold}\\pipeline ajustado en cada pliegue};
+  \node[cajag,text width=2.6cm,right=of kf] (cv) {\textbf{Curvas de validación}\\tres modelos};
+  \node[cajag,text width=2.6cm,right=of cv] (mf) {\textbf{Modelo final}\\con todo el train};
+  \node[cajag,text width=2.3cm] (te) at (6.0,-1.0) {\textbf{Test apartado}\\20\%, estratificado};
   \node[cajaa,text width=2.4cm] (ev) at (15.9,-1.0) {\textbf{Evaluar una vez}\\desempeño esperado};
-  \draw[rel] (csv.east) -- ++(0.35,0) |- (kf.west);
-  \draw[rel] (csv.east) -- ++(0.35,0) |- (te.west);
-  \draw[rel] (kf) -- (cv); \draw[rel] (cv) -- (mf);
+  \draw[rel] (csv) -- (kf); \draw[rel] (kf) -- (cv); \draw[rel] (cv) -- (mf);
+  \draw[rel] (csv.south) |- (te.west);
   \draw[rel] (mf.east) -| (ev.north);
   \draw[rel,dashed] (te.east) -- node[relacion,above] {no se usa para decidir nada} (ev.west);
 \end{tikzpicture}
 \end{bloque}
 ```
 
-`\carril{y}{alto}{rótulo}` dibuja la franja a todo el ancho, con `y` y `alto` en cm. Las
-cajas dentro de un carril van en blanco (`fill=white`) para que se lean sobre el gris.
+`\zona{y}{alto}{rótulo}` pone el rótulo vertical a la izquierda, centrado entre `y` e
+`y+alto` (en cm); las cajas de la zona empiezan desde x = 0,6 cm. `\divisoria{y}` traza
+la línea punteada a todo el ancho entre dos zonas. Sin franjas de fondo: las cajas son las
+de siempre, y las flechas que cruzan la línea son lo único que pasa de un mundo al otro.
+Para una división vertical (antes y después), `\draw[divisoria] (x,arriba) -- (x,abajo);`
+con un rótulo `etiqueta` arriba de cada lado.
 
 ### Mapa conceptual en capas
 
@@ -429,6 +438,41 @@ Tampoco van puntos en los nombres de nodo (`p-5.4` se lee como el nodo `p-5` y e
   1,06 cm de alto y deja 0,34 cm libres. Con tres renglones, 1,8 cm.
 - La hoja destacada (la trampa, la respuesta que más se pregunta) va con borde, no solo
   con un relleno claro.
+
+### Árbol de clasificación (qué familia es cada caso)
+
+```latex
+\begin{bloque}[Cada ejercicio de la guía según lo que pide y, en cada hoja, su herramienta. Con borde terracota, la familia que más se confunde.]
+\begin{tikzpicture}
+  \node[cajag,text width=2.3cm,anchor=west] (q1) at (0,1.0) {\textbf{¿Qué pide el ejercicio?}};
+  \node[cajag,text width=2.3cm,anchor=west] (q2) at (5.3,-1.8) {\textbf{¿Proporción o media?}};
+  \node[cajag,text width=6.0cm,anchor=west] (re) at (10.4,2.4)
+    {\familia[ej. 2, 5, 9]{Errores de una regla}{$\alpha$ y $\beta$ con $\Phi$}};
+  \node[cajag,fill=suave2,draw=acento2,line width=0.8pt,text width=6.0cm,anchor=west] (di) at (10.4,1.0)
+    {\familia[ej. 3, 4, 11]{Diseño de la prueba}{$n$ y el corte desde $\alpha$ y $\beta$}};
+  \node[cajag,text width=6.0cm,anchor=west] (pr) at (10.4,-0.4)
+    {\familia[ej. 7, 12]{Proporción}{$Z$ con $\sqrt{p_0q_0/n}$}};
+  \node[cajag,text width=6.0cm,anchor=west] (mz) at (10.4,-1.8)
+    {\familia[ej. 1]{Media con $\sigma$}{$Z$ con $\sigma/\sqrt{n}$}};
+  \node[cajag,text width=6.0cm,anchor=west] (mt) at (10.4,-3.2)
+    {\familia[ej. 6, 8, 10]{Media sin $\sigma$}{$T$ con $S/\sqrt{n}$, $n-1$ grados}};
+  \draw[flecha] (q1.east) -- ++(0.5,0) |- node[relacion,pos=0.75] {una regla} (re.west);
+  \draw[flecha] (q1.east) -- node[relacion,pos=0.6] {elegir $n$} (di.west);
+  \draw[flecha] (q1.east) -- ++(0.5,0) |- node[relacion,pos=0.75] {una muestra} (q2.west);
+  \draw[flecha] (q2.east) -- ++(0.5,0) |- node[relacion,pos=0.75] {proporción} (pr.west);
+  \draw[flecha] (q2.east) -- node[relacion,pos=0.6] {con $\sigma$} (mz.west);
+  \draw[flecha] (q2.east) -- ++(0.5,0) |- node[relacion,pos=0.75] {sin $\sigma$} (mt.west);
+\end{tikzpicture}
+\end{bloque}
+```
+
+- Es el árbol de decisión con una familia en cada hoja: sirve cuando unas preguntas
+  deciden a qué familia va cada caso (los ejercicios de una guía, qué prueba
+  corresponde). Reemplaza a las cajas con los casos como fichas adentro.
+- Cada hoja es `\familia[casos]{familia}{lo que comparten}`: los casos van a la derecha,
+  en gris y como texto, y `medir.py` no los cuenta como palabras.
+- Las preguntas, a la izquierda y en negrita; el rótulo de cada rama, sobre la flecha
+  (`relacion`), con pocas palabras. Hojas de dos renglones a 1,4 cm entre centros.
 
 ### Matriz de 2 × 2 (dos dimensiones a la vez)
 
@@ -654,7 +698,7 @@ normal va con el \textbf{desvío}, $N(\mu, \sigma)$; la exponencial, con la \tex
   dice cuántas palabras tiene cada ítem (con 12 ítems y `-texto`, unas 20), y las celdas
   cuentan.
 - La pieza que relaciona los ítems es un mapa de familias: nodos de una o dos palabras,
-  flechas llenas y punteadas con una leyenda en el pie (`diagramas.md`, regla 3).
+  flechas llenas y punteadas con una leyenda en el pie (`diagramas.md`, regla 4).
 - Si la fuente trae más unidades que `items`, se eligen con un criterio, sin gastar dos
   ítems en la misma familia; lo que quedó afuera se dice en la hoja si hay lugar, y
   siempre en el README y el reporte.
